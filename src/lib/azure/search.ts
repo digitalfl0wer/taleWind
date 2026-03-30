@@ -21,6 +21,7 @@ import {
 } from "@azure/search-documents";
 import type { CurriculumSearchDoc } from "@/types/Curriculum";
 import type { ChildSearchDoc } from "@/types/Child";
+import type { Subject } from "@/types/Child";
 
 // ── Client factories ──────────────────────────────────────────────────────────
 
@@ -96,7 +97,7 @@ function getIndexManagementClient(): SearchIndexClient {
  * @throws On Azure Search error.
  */
 export async function retrieveCurriculumChunks(
-  subject: string,
+  subject: Subject,
   searchText = "*",
   topK = 4
 ): Promise<CurriculumSearchDoc[]> {

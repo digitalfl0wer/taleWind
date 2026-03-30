@@ -10,7 +10,7 @@
  * JSON is loaded via createRequire for compatibility with this loader setup.
  */
 
-import { SearchClient, SearchIndex, AzureKeyCredential } from "@azure/search-documents";
+import { SearchClient, AzureKeyCredential } from "@azure/search-documents";
 import * as dotenv from "dotenv";
 import { createRequire } from "node:module";
 
