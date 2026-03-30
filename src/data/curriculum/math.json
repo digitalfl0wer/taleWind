@@ -1,0 +1,137 @@
+[
+  {
+    "id": "math-001",
+    "subject": "math",
+    "topic": "counting",
+    "content": "We count to know how many things there are. We start at one and go up. Counting helps us every day.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-002",
+    "subject": "math",
+    "topic": "counting",
+    "content": "You can count to 10 on your fingers. After 10 comes 11, then 12. Numbers keep going up and up.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-003",
+    "subject": "math",
+    "topic": "addition",
+    "content": "Adding means putting numbers together. Two apples plus three apples equals five apples. The plus sign means we are adding.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-004",
+    "subject": "math",
+    "topic": "addition",
+    "content": "When we add zero to a number it stays the same. Five plus zero equals five. Zero means nothing is added.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-005",
+    "subject": "math",
+    "topic": "subtraction",
+    "content": "Subtracting means taking away. If you have five cookies and eat two, you have three left. The minus sign means we are subtracting.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-006",
+    "subject": "math",
+    "topic": "shapes",
+    "content": "A circle is round with no corners. A square has four equal sides and four corners. A triangle has three sides and three corners.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-007",
+    "subject": "math",
+    "topic": "shapes",
+    "content": "A rectangle has four sides. Two sides are longer and two sides are shorter. A door is shaped like a rectangle.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-008",
+    "subject": "math",
+    "topic": "patterns",
+    "content": "A pattern repeats in the same order. Red, blue, red, blue is a pattern. Patterns are everywhere in the world around us.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-009",
+    "subject": "math",
+    "topic": "patterns",
+    "content": "Numbers can make patterns too. 2, 4, 6, 8 is a pattern. Each number goes up by two.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-010",
+    "subject": "math",
+    "topic": "measurement",
+    "content": "We measure things to find out how long or tall they are. We can use a ruler to measure. Inches and centimeters are units of measurement.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-011",
+    "subject": "math",
+    "topic": "measurement",
+    "content": "We can compare sizes. This book is bigger than that one. This pencil is shorter than that one. Comparing helps us understand size.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-012",
+    "subject": "math",
+    "topic": "numbers",
+    "content": "Numbers have names. The number 1 is called one. The number 10 is called ten. Each number has its own special name.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-013",
+    "subject": "math",
+    "topic": "numbers",
+    "content": "Even numbers can be split into two equal groups. Two, four, six, and eight are even numbers. Odd numbers cannot be split equally.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-014",
+    "subject": "math",
+    "topic": "time",
+    "content": "We use clocks to tell time. There are 60 minutes in one hour. There are 24 hours in one day.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-015",
+    "subject": "math",
+    "topic": "sorting",
+    "content": "Sorting means putting things into groups. We can sort by color, shape, or size. Sorting helps us organize things.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  }
+]

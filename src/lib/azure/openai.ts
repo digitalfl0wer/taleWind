@@ -108,19 +108,13 @@ export async function callGpt(
     timeoutMs = 30_000,
   } = options;
 
-  const deployment = process.env.AZURE_OPENAI_DEPLOYMENT?.trim() ?? "";
 
   const messages: ChatMessage[] = [
     { role: "system", content: systemPrompt },
     { role: "user", content: userMessage },
   ];
 
-  const requestParams: ChatCompletionCreateParamsNonStreaming = {
-    model: deployment,
-    messages,
-    max_tokens: maxTokens,
-    temperature,
-  };
+  
 
   // Wrap the call in a timeout race
   const timeoutPromise = new Promise<never>((_, reject) =>
@@ -133,10 +127,16 @@ export async function callGpt(
   try {
     const client = getOpenAIClient();
 
+    const requestParams = {
+        model: process.env.AZURE_OPENAI_DEPLOYMENT!, // Use deployment name as model identifier
+        messages,
+        max_tokens: maxTokens,
+        temperature,
+      };
     const response = (await Promise.race([
       client.chat.completions.create(requestParams),
       timeoutPromise,
-    ])) as Awaited<ReturnType<typeof client.chat.completions.create>>;
+    ]));
 
     const content = response.choices[0]?.message?.content ?? "";
 

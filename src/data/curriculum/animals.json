@@ -1,0 +1,137 @@
+[
+  {
+    "id": "animals-001",
+    "subject": "animals",
+    "topic": "mammals",
+    "content": "Dogs are mammals. Mammals have fur and feed their babies milk. There are many kinds of mammals.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-002",
+    "subject": "animals",
+    "topic": "mammals",
+    "content": "Elephants are the biggest land animals. They use their long trunks to drink water and pick up things.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-003",
+    "subject": "animals",
+    "topic": "birds",
+    "content": "Birds have wings and feathers. Most birds can fly. Baby birds hatch from eggs.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-004",
+    "subject": "animals",
+    "topic": "birds",
+    "content": "Penguins are birds that cannot fly. They swim very fast in the cold ocean. They live in groups called colonies.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-005",
+    "subject": "animals",
+    "topic": "ocean animals",
+    "content": "Fish live in water and breathe through gills. They have scales on their bodies. There are thousands of kinds of fish.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-006",
+    "subject": "animals",
+    "topic": "ocean animals",
+    "content": "Dolphins are very smart animals. They live in the ocean but breathe air. Dolphins talk to each other with clicks and whistles.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-007",
+    "subject": "animals",
+    "topic": "habitats",
+    "content": "A habitat is where an animal lives. Some animals live in forests. Some live in the ocean. Some live in deserts.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-008",
+    "subject": "animals",
+    "topic": "habitats",
+    "content": "Lions live on the savanna. The savanna has tall grass and warm weather. Lions rest in the shade during the day.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-009",
+    "subject": "animals",
+    "topic": "what animals eat",
+    "content": "Animals that eat only plants are called herbivores. Cows, rabbits, and deer are herbivores. They have flat teeth for chewing plants.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-010",
+    "subject": "animals",
+    "topic": "what animals eat",
+    "content": "Animals that eat other animals are called carnivores. Lions and eagles are carnivores. They have sharp teeth or beaks.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-011",
+    "subject": "animals",
+    "topic": "insects",
+    "content": "Insects have six legs and three body parts. Butterflies, ants, and bees are all insects. Most insects have wings.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-012",
+    "subject": "animals",
+    "topic": "insects",
+    "content": "Bees live in hives and make honey. Bees help flowers grow by moving pollen. A group of bees is called a colony.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-013",
+    "subject": "animals",
+    "topic": "reptiles",
+    "content": "Reptiles are cold-blooded animals. They warm up by sitting in the sun. Snakes, turtles, and lizards are reptiles.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-014",
+    "subject": "animals",
+    "topic": "animal babies",
+    "content": "Many baby animals have special names. A baby dog is called a puppy. A baby cat is called a kitten. A baby cow is called a calf.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-015",
+    "subject": "animals",
+    "topic": "animal sounds",
+    "content": "Animals make sounds to talk to each other. Birds sing songs. Frogs make croaking sounds. Wolves howl at the moon.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  }
+]

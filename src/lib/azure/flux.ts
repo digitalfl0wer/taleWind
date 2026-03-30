@@ -7,7 +7,7 @@
  * Rules enforced here:
  * - Child-appropriate illustrated style enforced in every prompt via prefix
  * - 30-second timeout on every call
- * - try/catch on every call — never throws to callers
+ * - Throws on failure — callers must wrap in try/catch
  * - Never logs child personal data
  * - Never exposes the endpoint or key in return values
  */

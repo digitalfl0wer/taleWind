@@ -1,0 +1,137 @@
+[
+  {
+    "id": "space-001",
+    "subject": "space",
+    "topic": "the sun",
+    "content": "The sun is a giant star. It gives us light and warmth. Without the sun, nothing could live on Earth.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-002",
+    "subject": "space",
+    "topic": "the sun",
+    "content": "The sun is very far away. Light from the sun takes eight minutes to reach Earth. The sun is much bigger than Earth.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-003",
+    "subject": "space",
+    "topic": "the moon",
+    "content": "The moon goes around Earth. It takes about one month to go all the way around. The moon has no air or water.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-004",
+    "subject": "space",
+    "topic": "the moon",
+    "content": "The moon seems to change shape in the sky. These shapes are called phases. The full moon is when we see the whole moon.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-005",
+    "subject": "space",
+    "topic": "planets",
+    "content": "Our solar system has eight planets. They all go around the sun. Earth is the planet we live on.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-006",
+    "subject": "space",
+    "topic": "planets",
+    "content": "Jupiter is the biggest planet. It has a giant storm called the Great Red Spot. Jupiter has many moons.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-007",
+    "subject": "space",
+    "topic": "planets",
+    "content": "Saturn has beautiful rings made of ice and rock. The rings go all the way around the planet. Saturn is very light for its size.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-008",
+    "subject": "space",
+    "topic": "stars",
+    "content": "Stars are giant balls of hot gas. They make their own light. Our sun is a star.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-009",
+    "subject": "space",
+    "topic": "stars",
+    "content": "Stars look small because they are very far away. On a clear night you can see thousands of stars. Stars twinkle because of air around Earth.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-010",
+    "subject": "space",
+    "topic": "astronauts",
+    "content": "Astronauts are people who travel to space. They train for many years. Astronauts wear special suits to protect them in space.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-011",
+    "subject": "space",
+    "topic": "astronauts",
+    "content": "In space there is no gravity. Astronauts float around their spacecraft. They have to strap themselves in to sleep.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-012",
+    "subject": "space",
+    "topic": "rockets",
+    "content": "Rockets carry astronauts and satellites into space. They use powerful fuel to go very fast. Rockets have to go fast to leave Earth.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-013",
+    "subject": "space",
+    "topic": "the milky way",
+    "content": "Our solar system is inside a galaxy called the Milky Way. A galaxy has billions of stars. The Milky Way looks like a band of light in the sky.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-014",
+    "subject": "space",
+    "topic": "day and night",
+    "content": "Earth spins like a top. When your side faces the sun it is daytime. When your side faces away it is nighttime.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-015",
+    "subject": "space",
+    "topic": "the international space station",
+    "content": "The International Space Station is a big spacecraft where astronauts live and work. It goes around Earth very fast. Scientists do experiments there.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  }
+]
