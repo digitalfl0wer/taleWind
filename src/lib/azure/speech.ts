@@ -327,7 +327,7 @@ export const ALLOWED_VOICE_COMMANDS = [
   "make it easier",
   "tell me more",
   "next",
-  "skip,"
+  "skip",
 ] as const;
 
 export type AllowedVoiceCommand = (typeof ALLOWED_VOICE_COMMANDS)[number];
