@@ -1,0 +1,300 @@
+{
+  "_comment": "Azure AI Search index definitions for Talewind. Create these indexes in the Azure portal or via the REST API before running indexCurriculum.ts or the intake agent. Fields marked 'key: true' are the document primary keys.",
+
+  "indexes": [
+    {
+      "name": "talewind-curriculum",
+      "_comment": "Stores curriculum chunks for RAG retrieval by the Story Agent. Retrieve 3–5 chunks per story generation call filtered by subject.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Edm.String",
+          "key": true,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false,
+          "facetable": false,
+          "_comment": "Supabase UUID of the curriculum_chunk row."
+        },
+        {
+          "name": "subject",
+          "type": "Edm.String",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false,
+          "facetable": true,
+          "_comment": "One of: animals | space | math. Always filter by this field when retrieving."
+        },
+        {
+          "name": "topic",
+          "type": "Edm.String",
+          "key": false,
+          "retrievable": true,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false,
+          "facetable": false,
+          "_comment": "Specific topic within the subject."
+        },
+        {
+          "name": "content",
+          "type": "Edm.String",
+          "key": false,
+          "retrievable": true,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false,
+          "facetable": false,
+          "_comment": "The curriculum text — max 150 words, first-grade reading level. Primary full-text search field."
+        },
+        {
+          "name": "gradeLevel",
+          "type": "Edm.Int32",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": true,
+          "sortable": true,
+          "facetable": false,
+          "_comment": "Grade level target. Always 1 for Talewind MVP."
+        },
+        {
+          "name": "sourceLabel",
+          "type": "Edm.String",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false,
+          "facetable": false,
+          "_comment": "Human-readable label for the curriculum source."
+        },
+        {
+          "name": "approved",
+          "type": "Edm.Boolean",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false,
+          "facetable": false,
+          "_comment": "Only approved=true docs are served to the Story Agent. Filter on this field always."
+        }
+      ],
+      "corsOptions": {
+        "allowedOrigins": ["*"],
+        "maxAgeInSeconds": 300
+      },
+      "suggesters": [],
+      "scoringProfiles": [],
+      "semantic": {
+        "_comment": "Semantic configuration for future semantic ranker integration (Phase 2).",
+        "configurations": [
+          {
+            "name": "curriculum-semantic",
+            "prioritizedFields": {
+              "titleField": { "fieldName": "topic" },
+              "prioritizedContentFields": [{ "fieldName": "content" }],
+              "prioritizedKeywordsFields": [{ "fieldName": "subject" }]
+            }
+          }
+        ]
+      }
+    },
+
+    {
+      "name": "talewind-children",
+      "_comment": "Stores one profile doc per child for RAG retrieval. Always retrieve the full doc by child ID before story generation. Updated after every session.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "Edm.String",
+          "key": true,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false,
+          "facetable": false,
+          "_comment": "Must equal the Supabase children.id UUID. Used as the lookup key."
+        },
+        {
+          "name": "childId",
+          "type": "Edm.String",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false,
+          "facetable": false,
+          "_comment": "Redundant with id — kept for explicit query filtering."
+        },
+        {
+          "name": "name",
+          "type": "Edm.String",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false,
+          "facetable": false
+        },
+        {
+          "name": "age",
+          "type": "Edm.Int32",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false,
+          "facetable": false
+        },
+        {
+          "name": "grade",
+          "type": "Edm.Int32",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false,
+          "facetable": false
+        },
+        {
+          "name": "interests",
+          "type": "Collection(Edm.String)",
+          "key": false,
+          "retrievable": true,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false,
+          "facetable": false,
+          "_comment": "Array of interest strings. Searchable so story personalization can match against them."
+        },
+        {
+          "name": "readingComfort",
+          "type": "Edm.String",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false,
+          "facetable": false,
+          "_comment": "beginner | developing | confident"
+        },
+        {
+          "name": "favoriteColor",
+          "type": "Edm.String",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false,
+          "facetable": false
+        },
+        {
+          "name": "favoriteAnimal",
+          "type": "Edm.String",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false,
+          "facetable": false
+        },
+        {
+          "name": "latestPersonalDetail",
+          "type": "Edm.String",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false,
+          "facetable": false,
+          "_comment": "Most recently collected personal detail from the rotating RAG bank. Highest-priority personalization input for the Story Agent."
+        },
+        {
+          "name": "preferredSubject",
+          "type": "Edm.String",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false,
+          "facetable": false
+        },
+        {
+          "name": "readingMode",
+          "type": "Edm.String",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false,
+          "facetable": false
+        },
+        {
+          "name": "storyTone",
+          "type": "Edm.String",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false,
+          "facetable": false
+        },
+        {
+          "name": "currentAdaptation",
+          "type": "Edm.String",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false,
+          "facetable": false,
+          "_comment": "simplify | enrich | hold — the Story Agent uses this to calibrate vocabulary."
+        },
+        {
+          "name": "recentSessionsSummary",
+          "type": "Edm.String",
+          "key": false,
+          "retrievable": true,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false,
+          "facetable": false,
+          "_comment": "Last 3 sessions serialised as a JSON string. Searchable for full-text context retrieval."
+        },
+        {
+          "name": "derivedMemoryText",
+          "type": "Edm.String",
+          "key": false,
+          "retrievable": true,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false,
+          "facetable": false,
+          "_comment": "Derived memory inferences joined into a single string. E.g. 'Responds well to animal stories. Struggles with math vocabulary.'"
+        },
+        {
+          "name": "updatedAt",
+          "type": "Edm.DateTimeOffset",
+          "key": false,
+          "retrievable": true,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true,
+          "facetable": false,
+          "_comment": "ISO 8601 timestamp of the last memory update."
+        }
+      ],
+      "corsOptions": {
+        "allowedOrigins": ["*"],
+        "maxAgeInSeconds": 300
+      },
+      "suggesters": [],
+      "scoringProfiles": []
+    }
+  ]
+}
