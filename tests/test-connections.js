@@ -58,6 +58,8 @@ async function testSupabase() {
   }
 }
 
-Promise.all([testOpenAI(), testSearch(), testSupabase()]).then(() => {
+
+
+Promise.all([testOpenAI(), testSearch(), testSupabase(), testSpeech()]).then(() => {
   console.log("\n🌀 Talewind connection test complete!");
 });
