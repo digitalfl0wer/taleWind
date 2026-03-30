@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import { AzureOpenAI } from "openai";
 import { SearchClient, AzureKeyCredential } from "@azure/search-documents";
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
@@ -9,15 +9,17 @@ async function testOpenAI() {
   try {
   
     
-    const client = new OpenAI({
-      baseURL: process.env.AZURE_OPENAI_ENDPOINT,
+    const client = new AzureOpenAI({
+      endpoint: process.env.AZURE_OPENAI_ENDPOINT,
       apiKey: process.env.AZURE_OPENAI_KEY,
+      deployment: process.env.AZURE_OPENAI_DEPLOYMENT,
+      apiVersion: "2024-10-21",
     });
 
     const result = await client.chat.completions.create({
-      messages: [{ role: "developer", content: "Say hello from Talewind!" }],
       model: process.env.AZURE_OPENAI_DEPLOYMENT,
-      store: true,
+      messages: [{ role: "user", content: "Say hello from Talewind!" }],
+      max_tokens: 50,
     });
 
     console.log("✅ Azure OpenAI connected:", result.choices[0].message.content);
@@ -58,7 +60,40 @@ async function testSupabase() {
   }
 }
 
+async function testSpeech() {
+  const key = process.env.AZURE_SPEECH_KEY;
+  const region = process.env.AZURE_SPEECH_REGION ?? "swedencentral";
 
+  if (!key) {
+    console.error("❌ Azure Speech failed: missing AZURE_SPEECH_KEY");
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `https://${region}.tts.speech.microsoft.com/cognitiveservices/voices/list`,
+      {
+        method: "GET",
+        headers: { "Ocp-Apim-Subscription-Key": key },
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`❌ Azure Speech failed: ${response.status} ${response.statusText}`);
+      return;
+    }
+
+    const voices = await response.json();
+    const ana = voices.find((v) => v.ShortName === "en-US-AnaNeural");
+    const amber = voices.find((v) => v.ShortName === "en-US-AmberNeural");
+
+    console.log(`✅ Azure Speech connected (${voices.length} voices, region: ${region})`);
+    console.log(`   AnaNeural (Spriggle):  ${ana ? "✅ found" : "⚠️  NOT FOUND"}`);
+    console.log(`   AmberNeural (narration): ${amber ? "✅ found" : "⚠️  NOT FOUND"}`);
+  } catch (err) {
+    console.error("❌ Azure Speech failed:", err.message);
+  }
+}
 
 Promise.all([testOpenAI(), testSearch(), testSupabase(), testSpeech()]).then(() => {
   console.log("\n🌀 Talewind connection test complete!");
