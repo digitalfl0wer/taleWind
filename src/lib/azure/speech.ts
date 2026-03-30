@@ -155,7 +155,7 @@ export async function synthesizeSpeech(
   const spriggleVoice =
     process.env.AZURE_SPEECH_VOICE_SPRIGGLE ?? "en-US-AnaNeural";
   const narrationVoice =
-    process.env.AZURE_SPEECH_VOICE_NARRATION ?? "en-US-AriaNeural";
+    process.env.AZURE_SPEECH_VOICE_NARRATION ?? "en-US-AmberNeural";
 
   const voiceName = role === "spriggle" ? spriggleVoice : narrationVoice;
   const ssml =
@@ -265,7 +265,7 @@ export async function recognizeSpeech(audioData: Buffer): Promise<SttResult> {
     config.speechRecognitionLanguage = "en-US";
 
     const pushStream = sdk.AudioInputStream.createPushStream();
-    pushStream.write(audioData);
+    pushStream.write(audioData.buffer as ArrayBuffer);
     pushStream.close();
 
     const audioConfig = sdk.AudioConfig.fromStreamInput(pushStream);
@@ -327,6 +327,7 @@ export const ALLOWED_VOICE_COMMANDS = [
   "make it easier",
   "tell me more",
   "next",
+  "skip,"
 ] as const;
 
 export type AllowedVoiceCommand = (typeof ALLOWED_VOICE_COMMANDS)[number];
