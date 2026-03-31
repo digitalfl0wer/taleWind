@@ -25,6 +25,7 @@ import React, {
   useContext,
   useEffect,
   useState,
+  useSyncExternalStore,
   useCallback,
   type ReactNode,
 } from "react";
@@ -78,16 +79,22 @@ export function AccessibilityProvider({
   });
 
   /** True if OS prefers-reduced-motion OR profile flag is set. */
-  const [osReducedMotion, setOsReducedMotion] = useState(false);
-
-  // Watch the OS reduced-motion media query
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setOsReducedMotion(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setOsReducedMotion(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
+  const osReducedMotion = useSyncExternalStore(
+    (onStoreChange) => {
+      if (typeof window === "undefined") {
+        return () => {};
+      }
+      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const handler = () => onStoreChange();
+      mq.addEventListener("change", handler);
+      return () => mq.removeEventListener("change", handler);
+    },
+    () => {
+      if (typeof window === "undefined") return false;
+      return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    },
+    () => false
+  );
 
   const disableAnimations = osReducedMotion || prefs.reducedMotion;
 

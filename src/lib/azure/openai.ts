@@ -13,10 +13,7 @@
  */
 
 import OpenAI from "openai";
-import type {
-  ChatCompletionMessageParam,
-  ChatCompletionCreateParamsNonStreaming,
-} from "openai/resources/chat/completions";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -123,39 +120,61 @@ export async function callGpt(
     )
   );
 
-  try {
-    const client = getOpenAIClient();
+  const client = getOpenAIClient();
+  const requestParams = {
+    model: process.env.AZURE_OPENAI_DEPLOYMENT!,
+    messages,
+    max_tokens: maxTokens,
+    temperature,
+  };
 
-    const requestParams = {
-        model: process.env.AZURE_OPENAI_DEPLOYMENT!, // Use deployment name as model identifier
-        messages,
-        max_tokens: maxTokens,
-        temperature,
-      };
-    const response = (await Promise.race([
-      client.chat.completions.create(requestParams),
-      timeoutPromise,
-    ]));
+  const MAX_RETRIES = 3;
+  let lastError: string | null = null;
 
-    const content = response.choices[0]?.message?.content ?? "";
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      const response = await Promise.race([
+        client.chat.completions.create(requestParams),
+        timeoutPromise,
+      ]);
 
-    if (!content) {
-      return {
-        content: "",
-        success: false,
-        errorMessage: "GPT returned an empty response.",
-      };
+      const content = response.choices[0]?.message?.content ?? "";
+
+      if (!content) {
+        return {
+          content: "",
+          success: false,
+          errorMessage: "GPT returned an empty response.",
+        };
+      }
+
+      return { content, success: true, errorMessage: null };
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Unknown error calling GPT-4o mini";
+      lastError = message;
+
+      // Only retry on 429 rate limit errors
+      const is429 =
+        (err instanceof Error && err.message.includes("429")) ||
+        (typeof (err as { status?: number }).status === "number" &&
+          (err as { status: number }).status === 429);
+
+      if (!is429 || attempt === MAX_RETRIES - 1) {
+        console.error("[azure/openai] callGpt error:", message);
+        return { content: "", success: false, errorMessage: message };
+      }
+
+      // Exponential backoff: 1s, 2s, 4s
+      const backoffMs = 1000 * Math.pow(2, attempt);
+      console.warn(
+        `[azure/openai] 429 rate limit — retrying in ${backoffMs}ms (attempt ${attempt + 1}/${MAX_RETRIES})`
+      );
+      await new Promise((resolve) => setTimeout(resolve, backoffMs));
     }
-
-    return { content, success: true, errorMessage: null };
-  } catch (err) {
-    // Log the error with context but never include child personal data
-    const message =
-      err instanceof Error ? err.message : "Unknown error calling GPT-4o mini";
-    console.error("[azure/openai] callGpt error:", message);
-
-    return { content: "", success: false, errorMessage: message };
   }
+
+  return { content: "", success: false, errorMessage: lastError };
 }
 
 /**

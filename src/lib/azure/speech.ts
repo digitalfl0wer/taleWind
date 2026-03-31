@@ -60,6 +60,24 @@ export interface SttResult {
 // ── SSML builders ─────────────────────────────────────────────────────────────
 
 /**
+ * Options for custom SSML synthesis.
+ */
+export interface SynthesizeSpeechOptions {
+  /** Text to synthesize. */
+  text: string;
+  /** Voice role used to pick default voice and SSML template. */
+  role?: VoiceRole;
+  /** Optional explicit Azure Neural voice name (overrides role default). */
+  voiceName?: string;
+  /** Optional SSML prosody rate (e.g. "+5%"). */
+  rate?: string;
+  /** Optional SSML prosody pitch (e.g. "+10%"). */
+  pitch?: string;
+  /** Optional expressive style for mstts:express-as (e.g. "cheerful"). */
+  style?: string;
+}
+
+/**
  * Builds an SSML string for Spriggle's voice.
  * Applies +5% rate and +10% pitch above baseline, per PRD spec.
  *
@@ -95,6 +113,48 @@ function buildNarrationSsml(text: string, voiceName: string): string {
 }
 
 /**
+ * Builds a custom SSML string with optional prosody and style.
+ *
+ * @param text - The text to speak.
+ * @param voiceName - Azure Neural voice name.
+ * @param rate - Optional prosody rate (e.g. "+5%").
+ * @param pitch - Optional prosody pitch (e.g. "+10%").
+ * @param style - Optional expressive style (mstts:express-as).
+ * @returns SSML string ready for the Speech SDK.
+ */
+function buildCustomSsml(
+  text: string,
+  voiceName: string,
+  rate?: string,
+  pitch?: string,
+  style?: string
+): string {
+  const safeVoice = sanitizeSsmlValue(voiceName, 64) ?? voiceName;
+  const safeStyle = sanitizeSsmlValue(style, 32);
+  const safeRate = sanitizeProsodyValue(rate);
+  const safePitch = sanitizeProsodyValue(pitch);
+
+  const prosodyOpen =
+    safeRate || safePitch
+      ? `<prosody${safeRate ? ` rate="${safeRate}"` : ""}${
+          safePitch ? ` pitch="${safePitch}"` : ""
+        }>`
+      : "";
+  const prosodyClose = prosodyOpen ? "</prosody>" : "";
+
+  const coreText = `${prosodyOpen}${escapeXml(text)}${prosodyClose}`;
+  const styledText = safeStyle
+    ? `<mstts:express-as style="${safeStyle}">${coreText}</mstts:express-as>`
+    : coreText;
+
+  return `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang="en-US">
+  <voice name="${safeVoice}">
+    ${styledText}
+  </voice>
+</speak>`;
+}
+
+/**
  * Escapes special XML characters in text to prevent SSML injection.
  *
  * @param text - Raw text from story/quiz output (already safety-checked).
@@ -107,6 +167,36 @@ function escapeXml(text: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
+}
+
+/**
+ * Sanitizes an SSML attribute value to a safe subset (letters, numbers, .-_).
+ *
+ * @param value - Raw SSML attribute value.
+ * @param maxLen - Maximum allowed length.
+ * @returns Sanitized value or undefined if invalid.
+ */
+function sanitizeSsmlValue(
+  value: string | undefined,
+  maxLen: number
+): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim().slice(0, maxLen);
+  if (!/^[A-Za-z0-9._-]+$/.test(trimmed)) return undefined;
+  return trimmed;
+}
+
+/**
+ * Validates a prosody value (rate/pitch) to a safe percent format.
+ *
+ * @param value - Raw prosody value.
+ * @returns Sanitized percent string or undefined if invalid.
+ */
+function sanitizeProsodyValue(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!/^[+-]?\d+%$/.test(trimmed)) return undefined;
+  return trimmed;
 }
 
 // ── Client factory ────────────────────────────────────────────────────────────
@@ -152,16 +242,44 @@ export async function synthesizeSpeech(
   text: string,
   role: VoiceRole
 ): Promise<TtsResult> {
+  return synthesizeSpeechWithOptions({ text, role });
+}
+
+/**
+ * Converts text to speech using Azure AI Speech with optional overrides.
+ * Supports explicit voice names and custom SSML prosody/style parameters.
+ *
+ * @param options - TTS options including text, role, and SSML overrides.
+ * @returns TtsResult with audio buffer and word timings.
+ */
+export async function synthesizeSpeechWithOptions(
+  options: SynthesizeSpeechOptions
+): Promise<TtsResult> {
   const spriggleVoice =
     process.env.AZURE_SPEECH_VOICE_SPRIGGLE ?? "en-US-AnaNeural";
   const narrationVoice =
     process.env.AZURE_SPEECH_VOICE_NARRATION ?? "en-US-AmberNeural";
 
-  const voiceName = role === "spriggle" ? spriggleVoice : narrationVoice;
+  const role: VoiceRole = options.role ?? "narration";
+  const requestedVoice =
+    options.voiceName?.trim() ||
+    (role === "spriggle" ? spriggleVoice : narrationVoice);
+  const voiceName =
+    sanitizeSsmlValue(requestedVoice, 64) ??
+    (role === "spriggle" ? spriggleVoice : narrationVoice);
+
   const ssml =
-    role === "spriggle"
-      ? buildSpriggleSsml(text, voiceName)
-      : buildNarrationSsml(text, voiceName);
+    options.voiceName || options.rate || options.pitch || options.style
+      ? buildCustomSsml(
+          options.text,
+          voiceName,
+          options.rate,
+          options.pitch,
+          options.style
+        )
+      : role === "spriggle"
+        ? buildSpriggleSsml(options.text, voiceName)
+        : buildNarrationSsml(options.text, voiceName);
 
   return new Promise<TtsResult>((resolve) => {
     let config: sdk.SpeechConfig;
@@ -211,7 +329,9 @@ export async function synthesizeSpeech(
             errorMessage: null,
           });
         } else {
-          const detail = sdk.CancellationDetails.fromResult(result as unknown as sdk.SpeechRecognitionResult);
+          const detail = sdk.CancellationDetails.fromResult(
+            result as unknown as sdk.SpeechRecognitionResult
+          );
           resolve({
             audioBuffer: Buffer.alloc(0),
             wordTimings: [],

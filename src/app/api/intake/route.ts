@@ -31,23 +31,27 @@ SCREEN 1 FLOW:
 Step 1 — Greeting and name:
 Say: "Hi! I'm Spriggle! What's your name?"
 Wait for voice or typed input.
-Respond: "Oh wow, [Name]! Love that name! 🌟"
+Respond: "Oh wow! Love that name! 🌟" — do NOT repeat the child's name back, just express warmth.
 
 Step 2 — Share and ask (favorite color):
-Say: "I have something really cool to share — my favorite color is violet, just like the night sky! What's YOUR favorite color?"
-Wait for voice input. Respond warmly to whatever they say.
+Say: "I have something really cool to share — my favorite color is violet, just like the night sky! Which color is YOUR favorite?"
+Wait for voice or typed input. Respond warmly to whatever they say.
 
 Step 3 — Share and ask (favorite animal):
-Say: "You know what's really cool? My favorite creature is a glowing fox who lives in the clouds! What's your favorite animal?"
-Wait for voice input. Respond warmly.
+Say: "You know what's really cool? My favorite creature is a glowing fox who lives in the clouds! Which animal is your favorite?"
+Wait for voice or typed input. Respond warmly.
 
 Step 4 — Confirm:
-Say: "So you're [Name], your favorite color is [color], and you love [animal]! Did I get that right?"
+Say: "Your favorite color is [color] and you love [animal]! Did I get that right? Tap 'Yes, that's me!' if I got it right, or 'Try again!' to redo it!" — do NOT say the child's name here.
+
 Show two large buttons: "Yes, that's me!" and "Try again!"
 
-If "Yes" — move to Screen 2 (subject doors).
+If "Yes" — say "Awesome! Three magic doors are waiting — tap Animals, Space, or Math to pick one!" and move to Screen 2 (subject doors).
 If "Try again" — say "No problem! Let's do that again. 🌟" and replay from Step 2 only.
 After 3 tries — say "Got it! Let's go! 🌀" and move to Screen 2.
+
+After subject is picked — say "How should we read? Tap 'Read to me' or 'Let's read together'!"
+After reading mode is picked — say "Almost there! Pick a story vibe — tap Calm, Exciting, or Silly!"
 
 RULES YOU MUST NEVER BREAK:
 - Never use the word "secret" — say "something really cool to share" instead
@@ -284,7 +288,6 @@ function getFallbackText(
   sessionData: IntakeSessionData,
   question?: { share: string; ask: string }
 ): string {
-  const name = sessionData.name ?? "";
   const color = sessionData.favoriteColor ?? "";
   const animal = sessionData.favoriteAnimal ?? "";
 
@@ -292,21 +295,21 @@ function getFallbackText(
     case "start":
       return "Hi! I'm Spriggle! What's your name?";
     case "name":
-      return `Oh wow, ${name || "friend"}! Love that name! 🌟 ${QUESTION_BANK[0].share} ${QUESTION_BANK[0].ask}`;
+      return `Oh wow! Love that name! 🌟 ${QUESTION_BANK[0].share} Which color is YOUR favorite?`;
     case "color":
-      return `Yay! ${QUESTION_BANK[1].share} ${QUESTION_BANK[1].ask}`;
+      return `Yay! ${QUESTION_BANK[1].share} Which animal is your favorite?`;
     case "animal":
-      return `So you're ${name}, your favorite color is ${color}, and you love ${animal}! Did I get that right?`;
+      return `Your favorite color is ${color} and you love ${animal}! Did I get that right? Tap 'Yes, that's me!' if I got it right, or 'Try again!' to redo it!`;
     case "confirm":
-      return "Great! Let's pick a subject door!";
+      return "Awesome! Three magic doors are waiting — tap Animals, Space, or Math to pick one!";
     case "retry":
-      return "No problem! Let's do that again. 🌟";
+      return "No problem! Let's do that again.";
     case "subject":
-      return "Which door should we open?";
+      return "How should we read? Tap 'Read to me' or 'Let's read together'!";
     case "reading_mode":
-      return "Do you want me to read to you, or read together?";
+      return "Almost there! Pick a story vibe — tap Calm, Exciting, or Silly!";
     case "tone":
-      return "All set! Ready to begin? 🌟";
+      return "All set! Here we go! 🌟";
     case "return_question":
       return question ? `${question.share} ${question.ask}` : "I have something fun to ask you!";
     case "return_answer":
@@ -508,7 +511,7 @@ export async function POST(request: Request): Promise<Response> {
   if (step === "retry") {
     const shouldRetry = sessionData.retryCount < 3;
     const spriggleText = shouldRetry
-      ? "No problem! Let's do that again. 🌟"
+      ? "No problem! Let's do that again."
       : "Got it! Let's go! 🌀";
     const response = await buildIntakeResponse({
       spriggleText,

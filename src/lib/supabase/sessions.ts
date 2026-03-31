@@ -14,7 +14,7 @@ interface SessionRow {
   id: string;
   child_id: string;
   subject: string;
-  story_metadata: Record<string, unknown>;
+  story_metadata: SessionRecord["storyMetadata"];
   quiz_score: number | null;
   adaptation_result: string | null;
   created_at: string;
@@ -31,7 +31,7 @@ function rowToSessionRecord(row: SessionRow): SessionRecord {
     id: row.id,
     childId: row.child_id,
     subject: row.subject as SessionRecord["subject"],
-    storyMetadata: row.story_metadata as SessionRecord["storyMetadata"],
+    storyMetadata: row.story_metadata,
     quizScore: row.quiz_score,
     adaptationResult:
       (row.adaptation_result as SessionRecord["adaptationResult"]) ?? null,

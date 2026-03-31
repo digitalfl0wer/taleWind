@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import type {
   SpeechRecognitionErrorEvent,
   SpeechRecognitionEvent,
@@ -33,8 +39,18 @@ export function useSpeechRecognition({
   onFailure,
 }: SpeechRecognitionHandlers): SpeechRecognitionControls {
   const [isListening, setIsListening] = useState(false);
+  const isSupported = useSyncExternalStore(
+    () => () => {},
+    () => {
+      if (typeof window === "undefined") return false;
+      const win = window as SpeechRecognitionWindow;
+      return Boolean(win.SpeechRecognition || win.webkitSpeechRecognition);
+    },
+    () => false
+  );
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const timeoutRef = useRef<number | null>(null);
+  const isStartedRef = useRef(false);
 
   /**
    * Returns a cached SpeechRecognition instance if supported.
@@ -42,6 +58,7 @@ export function useSpeechRecognition({
    * @returns SpeechRecognition instance or null if unsupported.
    */
   const getRecognition = useCallback((): SpeechRecognitionInstance | null => {
+    if (typeof window === "undefined") return null;
     if (recognitionRef.current) return recognitionRef.current;
     const win = window as SpeechRecognitionWindow;
     const RecognitionCtor = win.SpeechRecognition ?? win.webkitSpeechRecognition;
@@ -58,13 +75,17 @@ export function useSpeechRecognition({
    * Stops recognition and clears timers.
    */
   const stop = useCallback(() => {
-    if (timeoutRef.current) {
+    if (timeoutRef.current && typeof window !== "undefined") {
       window.clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
     if (recognitionRef.current) {
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.onerror = null;
+      recognitionRef.current.onend = null;
       recognitionRef.current.abort();
     }
+    isStartedRef.current = false;
     setIsListening(false);
   }, []);
 
@@ -102,9 +123,12 @@ export function useSpeechRecognition({
       };
 
       recognition.onend = () => {
+        isStartedRef.current = false;
         setIsListening(false);
       };
 
+      if (isStartedRef.current) return;
+      isStartedRef.current = true;
       setIsListening(true);
       recognition.start();
 
@@ -119,11 +143,6 @@ export function useSpeechRecognition({
   useEffect(() => {
     return () => stop();
   }, [stop]);
-
-  const isSupported = Boolean(
-    (window as SpeechRecognitionWindow).SpeechRecognition ||
-      (window as SpeechRecognitionWindow).webkitSpeechRecognition
-  );
 
   return { isSupported, isListening, listen, stop };
 }
