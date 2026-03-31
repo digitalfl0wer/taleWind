@@ -77,20 +77,19 @@ async function testTTSOutput() {
       </speak>
     `;
     // Narration test — Amber
-const narrationSSML = `
-  <speak version='1.0'
-    xmlns='http://www.w3.org/2001/10/synthesis'
-    xml:lang='en-US'>
-    <voice name='en-US-AmberNeural'>
-      <prosody rate='0%' pitch='0%'>
-        Lions live in groups called prides.
-        A pride has many lions who work together.
-        They hunt at night when it is cool.
-      </prosody>
-    </voice>
-  </speak>
-`;
-
+    const narrationSSML = `
+      <speak version='1.0'
+        xmlns='http://www.w3.org/2001/10/synthesis'
+        xml:lang='en-US'>
+        <voice name='en-US-AmberNeural'>
+          <prosody rate='0%' pitch='0%'>
+            Lions live in groups called prides.
+            A pride has many lions who work together.
+            They hunt at night when it is cool.
+          </prosody>
+        </voice>
+      </speak>
+    `;
     const response = await fetch(
       `https://${SPEECH_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`,
       {
