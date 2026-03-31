@@ -12,7 +12,7 @@
  * - Never exposes the model name, endpoint, or key in return values
  */
 
-import { AzureOpenAI } from "openai";
+import OpenAI from "openai";
 import type {
   ChatCompletionMessageParam,
   ChatCompletionCreateParamsNonStreaming,
@@ -58,33 +58,32 @@ export interface OpenAIChatResult {
 
 // ── Client factory ────────────────────────────────────────────────────────────
 
+// ⚠️  DO NOT replace OpenAI with AzureOpenAI here.
+// AZURE_OPENAI_ENDPOINT is an Azure AI Foundry /openai/v1/ URL.
+// AzureOpenAI is the legacy client for /openai/deployments/<name>/ endpoints
+// and will return 404 against a Foundry endpoint.
+// The base OpenAI client with baseURL is correct for Foundry (2025 Azure docs).
+
 /**
- * Creates and returns a configured AzureOpenAI client.
+ * Creates and returns a configured OpenAI client pointed at the
+ * Azure AI Foundry /openai/v1/ endpoint via baseURL.
  * Reads credentials from environment variables — never from arguments.
  *
- * @returns Configured AzureOpenAI instance.
+ * @returns Configured OpenAI instance.
  * @throws If required environment variables are missing.
  */
-function getOpenAIClient(): AzureOpenAI {
-  const endpoint = process.env.AZURE_OPENAI_ENDPOINT?.trim();
+function getOpenAIClient(): OpenAI {
+  const baseURL = process.env.AZURE_OPENAI_ENDPOINT?.trim();
   const apiKey = process.env.AZURE_OPENAI_KEY?.trim();
-  const deployment = process.env.AZURE_OPENAI_DEPLOYMENT?.trim();
-  const apiVersion =
-    process.env.AZURE_OPENAI_API_VERSION?.trim() ?? "2024-10-21";
 
-  if (!endpoint || !apiKey || !deployment) {
+  if (!baseURL || !apiKey) {
     throw new Error(
       "[azure/openai] Missing one or more required environment variables: " +
-        "AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_KEY, AZURE_OPENAI_DEPLOYMENT"
+        "AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_KEY"
     );
   }
 
-  return new AzureOpenAI({
-    endpoint,
-    apiKey,
-    deployment,
-    apiVersion,
-  });
+  return new OpenAI({ baseURL, apiKey });
 }
 
 // ── Main call helper ──────────────────────────────────────────────────────────
