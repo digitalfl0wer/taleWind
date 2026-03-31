@@ -133,5 +133,50 @@
     "grade_level": "1",
     "source_label": "curriculum",
     "approved": true
+  },
+  {
+    "id": "space-016",
+    "subject": "space",
+    "topic": "comets",
+    "content": "A comet is made of ice and dust. It travels around the sun. When it gets close, it can grow a bright tail.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-017",
+    "subject": "space",
+    "topic": "constellations",
+    "content": "A constellation is a star pattern. People give the patterns names. You can see them on clear nights.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-018",
+    "subject": "space",
+    "topic": "earth",
+    "content": "Earth is the third planet from the sun. It has water, air, and land. It is the only place we know with life.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-019",
+    "subject": "space",
+    "topic": "mars",
+    "content": "Mars is called the Red Planet. It is cold and dusty. Robots called rovers drive on Mars to explore.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "space-020",
+    "subject": "space",
+    "topic": "gravity",
+    "content": "Gravity is a force that pulls things. It keeps us on the ground. Gravity keeps the moon going around Earth.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
   }
 ]

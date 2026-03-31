@@ -10,56 +10,126 @@
  * JSON is loaded via createRequire for compatibility with this loader setup.
  */
 
-import { SearchClient, AzureKeyCredential } from "@azure/search-documents";
 import * as dotenv from "dotenv";
 import { createRequire } from "node:module";
+import type {
+  CurriculumSearchDoc,
+  RawCurriculumEntry,
+} from "@/types/Curriculum";
+import { indexCurriculumChunks } from "@/lib/azure/search";
+import { getSupabaseServiceClient } from "@/lib/supabase/client";
+
+/**
+ * Raw curriculum entry as stored in JSON files.
+ * grade_level is authored as a string in the JSON files.
+ */
+interface RawCurriculumFileEntry extends Omit<RawCurriculumEntry, "grade_level"> {
+  id: string;
+  grade_level: string | number;
+}
 
 const require = createRequire(import.meta.url);
 
-const animalsData = require("./animals.json");
-const spaceData = require("./space.json");
-const mathData = require("./math.json");
+const animalsData = require("./animals.json") as RawCurriculumFileEntry[];
+const spaceData = require("./space.json") as RawCurriculumFileEntry[];
+const mathData = require("./math.json") as RawCurriculumFileEntry[];
 
 // Load environment variables from .env.local
 dotenv.config({ path: ".env.local" });
 
-// The name of the index we are uploading to
-const INDEX_NAME = "talewind-curriculum";
-
 // Combine all curriculum chunks into one array
-const allChunks = [...animalsData, ...spaceData, ...mathData];
+const allChunks: RawCurriculumFileEntry[] = [
+  ...animalsData,
+  ...spaceData,
+  ...mathData,
+];
 
-async function indexCurriculum() {
+/**
+ * Maps a raw JSON curriculum entry to a Supabase row shape.
+ *
+ * @param entry - Raw curriculum entry from JSON files.
+ * @returns Row object ready for Supabase upsert.
+ */
+function mapEntryToSupabaseRow(entry: RawCurriculumFileEntry): {
+  subject: RawCurriculumEntry["subject"];
+  topic: string;
+  content: string;
+  grade_level: number;
+  source_label: string;
+  approved: boolean;
+  embedding_id: string;
+} {
+  return {
+    subject: entry.subject,
+    topic: entry.topic,
+    content: entry.content,
+    grade_level: Number.parseInt(String(entry.grade_level), 10),
+    source_label: entry.source_label,
+    approved: entry.approved,
+    embedding_id: entry.id,
+  };
+}
+
+/**
+ * Maps a raw JSON curriculum entry to an Azure AI Search document.
+ *
+ * @param entry - Raw curriculum entry from JSON files.
+ * @returns CurriculumSearchDoc for indexing.
+ */
+function mapEntryToSearchDoc(entry: RawCurriculumFileEntry): CurriculumSearchDoc {
+  return {
+    id: entry.id,
+    subject: entry.subject,
+    topic: entry.topic,
+    content: entry.content,
+    gradeLevel: Number.parseInt(String(entry.grade_level), 10),
+    sourceLabel: entry.source_label,
+    approved: entry.approved,
+  };
+}
+
+/**
+ * Indexes curriculum chunks to Supabase and Azure AI Search.
+ *
+ * @returns Promise<void>
+ */
+async function indexCurriculum(): Promise<void> {
   console.log("Starting curriculum indexing...");
   console.log(`Total chunks to index: ${allChunks.length}`);
 
-  // Create the search client using our Azure AI Search credentials
-  const client = new SearchClient(
-    process.env.AZURE_SEARCH_ENDPOINT!,
-    INDEX_NAME,
-    new AzureKeyCredential(process.env.AZURE_SEARCH_KEY!)
-  );
+  const supabaseRows = allChunks.map(mapEntryToSupabaseRow);
+  const searchDocs = allChunks.map(mapEntryToSearchDoc);
+
+  let supabaseUpserts = 0;
 
   try {
-    // Upload all chunks in one batch
-    // Azure AI Search accepts up to 1000 documents per batch
-    const result = await client.uploadDocuments(allChunks);
+    const supabase = getSupabaseServiceClient();
+    const { data, error } = await supabase
+      .from("curriculum_chunks")
+      .upsert(supabaseRows, { onConflict: "embedding_id" })
+      .select("id");
 
-    // Count how many succeeded
-    const succeeded = result.results.filter((r) => r.succeeded).length;
-    const failed = result.results.filter((r) => !r.succeeded).length;
-
-    console.log(`✅ Indexed ${succeeded} chunks successfully`);
-
-    // Log any failures so we know what to fix
-    if (failed > 0) {
-      console.error(`❌ Failed to index ${failed} chunks`);
-      result.results
-        .filter((r) => !r.succeeded)
-        .forEach((r) => console.error(`  Failed: ${r.key} — ${r.errorMessage}`));
+    if (error) {
+      console.error("[indexCurriculum] Supabase upsert failed:", error.message);
+    } else {
+      supabaseUpserts = data?.length ?? 0;
+      console.log(`✅ Supabase upserts: ${supabaseUpserts}`);
     }
   } catch (error) {
-    console.error("❌ Indexing failed:", error);
+    console.error(
+      "[indexCurriculum] Supabase upsert error:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+  }
+
+  try {
+    const indexedCount = await indexCurriculumChunks(searchDocs);
+    console.log(`✅ Azure docs indexed: ${indexedCount}`);
+  } catch (error) {
+    console.error(
+      "[indexCurriculum] Azure indexing failed:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
     process.exit(1);
   }
 }

@@ -133,5 +133,50 @@
     "grade_level": "1",
     "source_label": "curriculum",
     "approved": true
+  },
+  {
+    "id": "math-016",
+    "subject": "math",
+    "topic": "comparing numbers",
+    "content": "We can compare numbers. The greater than sign is > and the less than sign is <. Bigger numbers are greater.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-017",
+    "subject": "math",
+    "topic": "place value",
+    "content": "Numbers have tens and ones. In 23, the 2 means two tens. The 3 means three ones.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-018",
+    "subject": "math",
+    "topic": "fractions",
+    "content": "A fraction is a part of a whole. Half means two equal parts. If you split a cookie in half, you get two pieces.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-019",
+    "subject": "math",
+    "topic": "money",
+    "content": "Money has coins. A penny is worth 1 cent. A dime is worth 10 cents.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "math-020",
+    "subject": "math",
+    "topic": "temperature",
+    "content": "Temperature tells how hot or cold it is. We read it with a thermometer. Hot is warmer, and cold is cooler.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
   }
 ]

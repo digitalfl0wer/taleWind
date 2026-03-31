@@ -1,19 +1,29 @@
-import { AzureOpenAI } from "openai";
+/**
+ * tests/test-connections.js
+ *
+ * Validates connectivity to all 4 Talewind services.
+ * Run with: node tests/test-connections.js
+ *
+ * Azure OpenAI note:
+ *   AZURE_OPENAI_ENDPOINT uses the Azure AI Foundry /openai/v1/ path format.
+ *   This format requires the base OpenAI client with baseURL — NOT AzureOpenAI.
+ *   AzureOpenAI is the legacy client for deployment-level endpoints and appends
+ *   its own routing, causing 404s against Foundry /openai/v1/ endpoints.
+ *   Source: https://learn.microsoft.com/en-us/azure/foundry/openai/api-version-lifecycle
+ */
+
+import OpenAI from "openai";
 import { SearchClient, AzureKeyCredential } from "@azure/search-documents";
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
-  // const OpenAI = require("openai");
+
 async function testOpenAI() {
   try {
-  
-    
-    const client = new AzureOpenAI({
-      endpoint: process.env.AZURE_OPENAI_ENDPOINT,
+    const client = new OpenAI({
+      baseURL: process.env.AZURE_OPENAI_ENDPOINT,
       apiKey: process.env.AZURE_OPENAI_KEY,
-      deployment: process.env.AZURE_OPENAI_DEPLOYMENT,
-      apiVersion: "2024-10-21",
     });
 
     const result = await client.chat.completions.create({
@@ -27,8 +37,6 @@ async function testOpenAI() {
     console.error("❌ Azure OpenAI failed:", err.message);
   }
 }
-
-
 
 async function testSearch() {
   try {
@@ -52,7 +60,7 @@ async function testSupabase() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
 
-    const { data, error } = await supabase.from("children").select("count");
+    const { error } = await supabase.from("children").select("count");
     if (error) throw error;
     console.log("✅ Supabase connected");
   } catch (err) {
@@ -88,7 +96,7 @@ async function testSpeech() {
     const amber = voices.find((v) => v.ShortName === "en-US-AmberNeural");
 
     console.log(`✅ Azure Speech connected (${voices.length} voices, region: ${region})`);
-    console.log(`   AnaNeural (Spriggle):  ${ana ? "✅ found" : "⚠️  NOT FOUND"}`);
+    console.log(`   AnaNeural (Spriggle):    ${ana ? "✅ found" : "⚠️  NOT FOUND"}`);
     console.log(`   AmberNeural (narration): ${amber ? "✅ found" : "⚠️  NOT FOUND"}`);
   } catch (err) {
     console.error("❌ Azure Speech failed:", err.message);
