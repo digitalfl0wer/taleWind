@@ -27,6 +27,7 @@
 - [ ] **2.5** Wire accessibility state: read `reducedMotion` from child profile AND `prefers-reduced-motion` media query — if either is true, disable all animations globally
 - [ ] **2.6** Build subject card components (Animals, Spaces, Math) — jewel tone borders and glow, `bounce-in` animation, hover scale, `22px` border radius
 - [ ] **2.7** Build reusable button, pill/voice-chip, and input field components with locked border radii (`18px`, `20px`, `18px`)
+Note: Voice command hint bar is a shared reusable component needed on intake, story, and quiz screens; must respect reducedMotion (no pulse animation) and be keyboard-accessible.
 
 ---
 
@@ -47,16 +48,16 @@
 
 ## Phase 4: Curriculum Data
 
-- [ ] **4.1** Author `src/data/curriculum/animals.json` — minimum 15 chunks, one concept per chunk, max 150 words, fields: `subject`, `topic`, `content`, `grade_level`, `source_label`, `approved: true`
-- [ ] **4.2** Author `src/data/curriculum/space.json` — minimum 15 chunks, same schema
-- [ ] **4.3** Author `src/data/curriculum/math.json` — minimum 15 chunks, same schema
-- [ ] **4.4** Write `src/data/indexCurriculum.ts` — reads all three JSON files, upserts into `curriculum_chunks` Supabase table, and indexes into `talewind-curriculum` Azure AI Search index
+- [x] **4.1** Author `src/data/curriculum/animals.json` — minimum 15 chunks, one concept per chunk, max 150 words, fields: `subject`, `topic`, `content`, `grade_level`, `source_label`, `approved: true`
+- [x] **4.2** Author `src/data/curriculum/space.json` — minimum 15 chunks, same schema
+- [x] **4.3** Author `src/data/curriculum/math.json` — minimum 15 chunks, same schema
+- [x] **4.4** Write `src/data/indexCurriculum.ts` — reads all three JSON files, upserts into `curriculum_chunks` Supabase table, and indexes into `talewind-curriculum` Azure AI Search index
 
 ---
 
 ## Phase 5: Intake Agent (Magic Door)
 
-- [ ] **5.1** Build `src/app/api/intake/route.ts` — POST endpoint; accepts session state and child input; runs Intake Agent logic; returns next prompt, TTS audio, and STT instruction; writes completed profile to Supabase and indexes to `talewind-children`
+- [x] **5.1** Build `src/app/api/intake/route.ts` — POST endpoint; accepts session state and child input; runs Intake Agent logic; returns next prompt, TTS audio, and STT instruction; writes completed profile to Supabase and indexes to `talewind-children`
 - [ ] **5.2** Build Magic Door UI — `src/app/child/intake/` — full-screen layout with Spriggle at top, progress across 4 screens: Name + Exchange, Subject Choice, Reading Mode, Story Vibe
 - [ ] **5.3** Implement Screen 1 (Introduction Exchange) — 7-question rotating RAG bank; on first session ask Q1 + Q2; each subsequent session ask 1 new question in order; track `lastQuestionAsked` in child profile; Spriggle shares something before asking
 - [ ] **5.4** Implement Screen 1 confirm/retry loop — summary card → ✅ "Yes, that's me!" / 🔄 "Try again!" → retry Steps 2–3 only (not name) → after 3 failed attempts accept last heard values
@@ -66,6 +67,7 @@
 - [ ] **5.8** Implement Screen 4 (Story Vibe) — 3 animated 3-second clips: Calm, Exciting, Silly
 - [ ] **5.9** Enforce intake language safety rules — never use "secret"; warmth never conditional on correct performance; unexpected input → *"Ha, I love that! Ready to go? 🌀"*; no mention of stories/learning in redirects
 - [ ] **5.10** Enforce 2-minute intake target — measure end-to-end and optimize prompts/TTS latency if needed
+Notes for 5.2–5.10: IntakeStep flow is start → name → color → animal → confirm → subject → reading_mode → tone → complete, with return_question → return_answer → complete on return sessions. Request shape: `{ step, input?, sessionData, parentId, childId? }`. Response shape: `{ spriggleText, audioBase64, wordTimings, nextStep, stt, profile? }`. `audioBase64` is MP3. Voice command hint bar requirement: show a small persistent bar while `stt.listen` is true (freeform during intake; bounded commands "say it again · make it easier · tell me more · next" during story mode).
 
 ---
 
