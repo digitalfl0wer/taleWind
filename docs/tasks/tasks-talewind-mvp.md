@@ -20,13 +20,13 @@
 
 ## Phase 2: Design System & Global UI
 
-- [ ] **2.1** Add Google Fonts (Comfortaa, Playfair Display, Sacramento) and OpenDyslexic to the app
-- [ ] **2.2** Build Spriggle SVG component — floating animation (`float` keyframe), hover wiggle, purple drop shadow, speech bubble with gold text and purple border
-- [ ] **2.3** Build starfield background component — 40 small twinkling stars for all child-facing screens
-- [ ] **2.4** Implement global accessibility CSS: reduced motion mode (disables all animations), dyslexia font toggle (OpenDyslexic), high contrast mode, larger text mode (1.5x base font size)
-- [ ] **2.5** Wire accessibility state: read `reducedMotion` from child profile AND `prefers-reduced-motion` media query — if either is true, disable all animations globally
-- [ ] **2.6** Build subject card components (Animals, Spaces, Math) — jewel tone borders and glow, `bounce-in` animation, hover scale, `22px` border radius
-- [ ] **2.7** Build reusable button, pill/voice-chip, and input field components with locked border radii (`18px`, `20px`, `18px`)
+- [x] **2.1** Add Google Fonts (Comfortaa, Playfair Display, Sacramento) and OpenDyslexic to the app
+- [x] **2.2** Build Spriggle SVG component — floating animation (`float` keyframe), hover wiggle, purple drop shadow, speech bubble with gold text and purple border
+- [x] **2.3** Build starfield background component — 40 small twinkling stars for all child-facing screens
+- [x] **2.4** Implement global accessibility CSS: reduced motion mode (disables all animations), dyslexia font toggle (OpenDyslexic), high contrast mode, larger text mode (1.5x base font size)
+- [x] **2.5** Wire accessibility state: read `reducedMotion` from child profile AND `prefers-reduced-motion` media query — if either is true, disable all animations globally
+- [x] **2.6** Build subject card components (Animals, Spaces, Math) — jewel tone borders and glow, `bounce-in` animation, hover scale, `22px` border radius
+- [x] **2.7** Build reusable button, pill/voice-chip, and input field components with locked border radii (`18px`, `20px`, `18px`)
 Note: Voice command hint bar is a shared reusable component needed on intake, story, and quiz screens; must respect reducedMotion (no pulse animation) and be keyboard-accessible.
 
 ---
@@ -58,15 +58,15 @@ Note: Voice command hint bar is a shared reusable component needed on intake, st
 ## Phase 5: Intake Agent (Magic Door)
 
 - [x] **5.1** Build `src/app/api/intake/route.ts` — POST endpoint; accepts session state and child input; runs Intake Agent logic; returns next prompt, TTS audio, and STT instruction; writes completed profile to Supabase and indexes to `talewind-children`
-- [ ] **5.2** Build Magic Door UI — `src/app/child/intake/` — full-screen layout with Spriggle at top, progress across 4 screens: Name + Exchange, Subject Choice, Reading Mode, Story Vibe
-- [ ] **5.3** Implement Screen 1 (Introduction Exchange) — 7-question rotating RAG bank; on first session ask Q1 + Q2; each subsequent session ask 1 new question in order; track `lastQuestionAsked` in child profile; Spriggle shares something before asking
-- [ ] **5.4** Implement Screen 1 confirm/retry loop — summary card → ✅ "Yes, that's me!" / 🔄 "Try again!" → retry Steps 2–3 only (not name) → after 3 failed attempts accept last heard values
-- [ ] **5.5** Implement STT input for Screen 1 — 8s timeout, gentle re-prompt on silence (*"I'm listening! Take your time. 🌟"*), fallback to visual button options after 2 unrecognized inputs
-- [ ] **5.6** Implement Screen 2 (Subject Choice) — 3 illustrated subject doors with sound effects; Animals, Space, Math
-- [ ] **5.7** Implement Screen 3 (Reading Mode) — 2 large options: "Read to me" / "Let's read together"; Spriggle reads options aloud via TTS
-- [ ] **5.8** Implement Screen 4 (Story Vibe) — 3 animated 3-second clips: Calm, Exciting, Silly
-- [ ] **5.9** Enforce intake language safety rules — never use "secret"; warmth never conditional on correct performance; unexpected input → *"Ha, I love that! Ready to go? 🌀"*; no mention of stories/learning in redirects
-- [ ] **5.10** Enforce 2-minute intake target — measure end-to-end and optimize prompts/TTS latency if needed
+- [x] **5.2** Build Magic Door UI — `src/app/child/intake/` — full-screen layout with Spriggle at top, progress across 4 screens: Name + Exchange, Subject Choice, Reading Mode, Story Vibe
+- [x] **5.3** Implement Screen 1 (Introduction Exchange) — 7-question rotating RAG bank; on first session ask Q1 + Q2; each subsequent session ask 1 new question in order; track `lastQuestionAsked` in child profile; Spriggle shares something before asking
+- [x] **5.4** Implement Screen 1 confirm/retry loop — summary card → ✅ "Yes, that's me!" / 🔄 "Try again!" → retry Steps 2–3 only (not name) → after 3 failed attempts accept last heard values
+- [x] **5.5** Implement STT input for Screen 1 — 8s timeout, gentle re-prompt on silence (*"I'm listening! Take your time. 🌟"*), fallback to visual button options after 2 unrecognized inputs
+- [x] **5.6** Implement Screen 2 (Subject Choice) — 3 illustrated subject doors with sound effects; Animals, Space, Math
+- [x] **5.7** Implement Screen 3 (Reading Mode) — 2 large options: "Read to me" / "Let's read together"; Spriggle reads options aloud via TTS
+- [x] **5.8** Implement Screen 4 (Story Vibe) — 3 animated 3-second clips: Calm, Exciting, Silly
+- [x] **5.9** Enforce intake language safety rules — never use "secret"; warmth never conditional on correct performance; unexpected input → *"Ha, I love that! Ready to go? 🌀"*; no mention of stories/learning in redirects
+- [x] **5.10** Enforce 2-minute intake target — measure end-to-end and optimize prompts/TTS latency if needed
 Notes for 5.2–5.10: IntakeStep flow is start → name → color → animal → confirm → subject → reading_mode → tone → complete, with return_question → return_answer → complete on return sessions. Request shape: `{ step, input?, sessionData, parentId, childId? }`. Response shape: `{ spriggleText, audioBase64, wordTimings, nextStep, stt, profile? }`. `audioBase64` is MP3. Voice command hint bar requirement: show a small persistent bar while `stt.listen` is true (freeform during intake; bounded commands "say it again · make it easier · tell me more · next" during story mode).
 
 ---
