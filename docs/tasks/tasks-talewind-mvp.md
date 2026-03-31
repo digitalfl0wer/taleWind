@@ -73,9 +73,9 @@ Notes for 5.2–5.10: IntakeStep flow is start → name → color → animal →
 
 ## Phase 6: Story Agent
 
-- [ ] **6.1** Build `src/app/api/story/route.ts` — POST endpoint; retrieves child profile doc + 3–5 curriculum chunks from Azure AI Search; calls GPT-4o mini; runs safety check; returns 4–6 scene story object
-- [ ] **6.2** Story Agent prompt — enforce: first-grade vocabulary, 2–4 sentence scenes, child's preferred tone, child's favorite color in image prompts and setting, favorite animal as story character, most recently collected RAG detail as highest-priority personalization
-- [ ] **6.3** Build `src/app/api/image/route.ts` — accepts scene image prompt; calls FLUX 1.1 pro via `azure/flux.ts`; returns image URL; generate one image per scene
+- [x] **6.1** Build `src/app/api/story/route.ts` — POST endpoint; retrieves child profile doc + 3–5 curriculum chunks from Azure AI Search; calls GPT-4o mini; runs safety check; returns 4–6 scene story object
+- [x] **6.2** Story Agent prompt — enforce: first-grade vocabulary, 2–4 sentence scenes, child's preferred tone, child's favorite color in image prompts and setting, favorite animal as story character, most recently collected RAG detail as highest-priority personalization
+- [x] **6.3** Build `src/app/api/image/route.ts` — accepts scene image prompt; calls FLUX 1.1 pro via `azure/flux.ts`; returns image URL; generate one image per scene
 - [ ] **6.4** Build story reader UI — `src/app/child/story/` — scene card layout; scene title in Sacramento font with gold accent color; narration text in Playfair Display with `textMuted` color; scene image displayed above text
 - [ ] **6.5** Story UI: auto-advance is off by default — child taps "Next" or says "Next" to advance scenes; display scene progress indicator
 
@@ -83,7 +83,7 @@ Notes for 5.2–5.10: IntakeStep flow is start → name → color → animal →
 
 ## Phase 7: Narration & Voice Commands
 
-- [ ] **7.1** Build `src/app/api/tts/route.ts` — POST endpoint; accepts text + voice ID + SSML params; calls Azure Speech TTS; returns audio buffer + word-level timing array
+- [x] **7.1** Build `src/app/api/tts/route.ts` — POST endpoint; accepts text + voice ID + SSML params; calls Azure Speech TTS; returns audio buffer + word-level timing array
 - [ ] **7.2** Implement caption sync in story UI — highlight each word in narration text as it is spoken using word timing data; captions ON by default; Playfair Display font; `primaryLight` color
 - [ ] **7.3** Implement "Say it again" — replay current scene narration from start on button tap or voice command
 - [ ] **7.4** Implement all 5 bounded voice commands: `say it again`, `make it easier`, `tell me more`, `next`, and quiz answer input
