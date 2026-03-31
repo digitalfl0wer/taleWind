@@ -44,6 +44,9 @@ export const colors = {
 
   /** Gold — scene titles (Sacramento font), Spriggle speech bubble text. */
   accent: "#fbbf24",
+
+  /** Twinkling stars for the child starfield background. */
+  starfield: "rgba(255,255,255,0.5)",
 } as const;
 
 // ── Subject Glow Shadows ──────────────────────────────────────────────────────

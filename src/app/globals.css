@@ -1,26 +1,249 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ── Talewind Design Tokens → Tailwind v4 Theme ────────────────────────────── */
+
+@theme {
+  /* Colors */
+  --color-background:    #0d0d2b;
+  --color-primary:       #7c3aed;
+  --color-primary-light: #a78bfa;
+  --color-primary-dark:  #5b21b6;
+  --color-animals:       #10b981;
+  --color-space:         #3b82f6;
+  --color-math:          #f59e0b;
+  --color-text-primary:  #e9d5ff;
+  --color-text-muted:    #c4b5fd;
+  --color-accent:        #fbbf24;
+
+  /* Font families — resolved from CSS variables injected by next/font */
+  --font-ui:        var(--font-ui);
+  --font-narration: var(--font-narration);
+  --font-display:   var(--font-display);
+  --font-dyslexia:  var(--font-dyslexia);
+
+  /* Border radii */
+  --radius-card:   22px;
+  --radius-button: 18px;
+  --radius-pill:   20px;
+  --radius-input:  18px;
+
+  /* Animation durations */
+  --duration-float:     3s;
+  --duration-twinkle:   2.5s;
+  --duration-wiggle:    0.4s;
+  --duration-bounce-in: 0.5s;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ── Base Reset ─────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body {
+  height: 100%;
+}
+
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("/fonts/OpenDyslexic-Regular.otf") format("opentype");
+  font-display: swap;
+}
+
+html {
+  --font-dyslexia: "OpenDyslexic", sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #0d0d2b;
+  color: #e9d5ff;
+  font-family: var(--font-ui, 'Comfortaa', sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Keyframe Animations ────────────────────────────────────────────────────── */
+
+@keyframes float {
+  0%,  100% { transform: translateY(0px); }
+  50%        { transform: translateY(-14px); }
+}
+
+@keyframes twinkle {
+  0%,  100% { opacity: 0.2; transform: scale(1); }
+  50%        { opacity: 0.9; transform: scale(1.3); }
+}
+
+@keyframes wiggle {
+  0%          { transform: rotate(0deg); }
+  20%         { transform: rotate(-8deg); }
+  40%         { transform: rotate(8deg); }
+  60%         { transform: rotate(-5deg); }
+  80%         { transform: rotate(5deg); }
+  100%        { transform: rotate(0deg); }
+}
+
+@keyframes bounce-in {
+  0%   { opacity: 0; transform: scale(0.85) translateY(16px); }
+  60%  { opacity: 1; transform: scale(1.04) translateY(-4px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.6); }
+  70%  { box-shadow: 0 0 0 12px rgba(124, 58, 237, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
+}
+
+/* ── Animation Utility Classes ──────────────────────────────────────────────── */
+
+.animate-float {
+  animation: float var(--duration-float, 3s) ease-in-out infinite;
+}
+
+.animate-twinkle {
+  animation: twinkle var(--duration-twinkle, 2.5s) ease-in-out infinite;
+}
+
+.animate-wiggle {
+  animation: wiggle var(--duration-wiggle, 0.4s) ease-in-out;
+}
+
+.animate-bounce-in {
+  animation: bounce-in var(--duration-bounce-in, 0.5s) cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.5s ease-out infinite;
+}
+
+/* ── Spriggle Character ─────────────────────────────────────────────────────── */
+
+.spriggle {
+  filter: drop-shadow(0 0 14px rgba(167, 139, 250, 0.7));
+}
+
+.spriggle:hover .spriggle-body {
+  animation: wiggle var(--duration-wiggle, 0.4s) ease-in-out;
+}
+
+/* ── Subject Card Glow ──────────────────────────────────────────────────────── */
+
+.glow-animals:hover {
+  box-shadow: 0 0 32px rgba(16, 185, 129, 0.5), 0 0 8px rgba(16, 185, 129, 0.3);
+}
+
+.glow-space:hover {
+  box-shadow: 0 0 32px rgba(59, 130, 246, 0.5), 0 0 8px rgba(59, 130, 246, 0.3);
+}
+
+.glow-math:hover {
+  box-shadow: 0 0 32px rgba(245, 158, 11, 0.5), 0 0 8px rgba(245, 158, 11, 0.3);
+}
+
+/* ── Accessibility Modes ────────────────────────────────────────────────────── */
+
+/* Mode 1: Reduced Motion — disable ALL animations */
+/* Triggered by OS preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Triggered by child accessibility profile (class applied by AccessibilityProvider) */
+html.reduced-motion *, html.reduced-motion *::before, html.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Mode 2: Dyslexia Font — replace all fonts with OpenDyslexic */
+html.dyslexia-font,
+html.dyslexia-font * {
+  font-family: var(--font-dyslexia, 'OpenDyslexic', sans-serif) !important;
+}
+
+/* Mode 3: High Contrast */
+html.high-contrast {
+  --color-text-primary: #ffffff;
+  --color-text-muted:   #ffffff;
+  --color-background:   #000000;
+  --color-primary:      #c084fc;
+  --color-accent:       #facc15;
+}
+
+html.high-contrast body {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+html.high-contrast .speech-bubble {
+  background-color: #000000 !important;
+  border-color: #c084fc !important;
+  color: #ffffff !important;
+}
+
+html.high-contrast button {
+  border: 2px solid #ffffff !important;
+}
+
+/* Mode 4: Larger Text — 1.5x base font size */
+html.larger-text {
+  font-size: 1.5rem;
+}
+
+html.larger-text body {
+  font-size: 1.5rem;
+}
+
+/* Mode 5: Captions always on (default behavior) */
+.captions {
+  display: block;
+}
+
+html.captions-hidden .captions {
+  display: none;
+}
+
+/* ── Speech Bubble ──────────────────────────────────────────────────────────── */
+
+.speech-bubble {
+  background: rgba(13, 13, 43, 0.85);
+  border: 2px solid #7c3aed;
+  border-radius: 18px;
+  box-shadow: 0 0 0 2px #7c3aed, 0 4px 20px rgba(124, 58, 237, 0.3);
+  color: #fbbf24;
+  font-family: var(--font-ui, 'Comfortaa', sans-serif);
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 12px 10px 0;
+  border-style: solid;
+  border-color: #7c3aed transparent transparent;
+}
+
+/* ── Font Family Utilities ──────────────────────────────────────────────────── */
+
+.font-ui        { font-family: var(--font-ui, 'Comfortaa', sans-serif); }
+.font-narration { font-family: var(--font-narration, 'Playfair Display', serif); }
+.font-display   { font-family: var(--font-display, 'Sacramento', cursive); }
+
+/* ── Tap-target Safety (minimum 44×44px for all child interactive elements) ── */
+
+.child-tap-target {
+  min-width:  44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
