@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useState } from "react";
 import { AccessibilityProvider } from "../components/AccessibilityProvider";
 import { StarfieldBackground } from "../components/StarfieldBackground";
 import type { AccessibilityPreferences } from "@/types/Child";
@@ -14,7 +14,7 @@ export interface ChildShellProps {
  * Root shell for all child-facing screens.
  */
 export function ChildShell({ children }: ChildShellProps) {
-  const initialPrefs = useMemo<Partial<AccessibilityPreferences>>(() => {
+  const [initialPrefs] = useState<Partial<AccessibilityPreferences>>(() => {
     if (typeof window === "undefined") return {};
     try {
       const raw = window.localStorage.getItem("talewind-accessibility");
@@ -24,7 +24,7 @@ export function ChildShell({ children }: ChildShellProps) {
       console.warn("[child-shell] failed to read accessibility prefs", error);
       return {};
     }
-  }, []);
+  });
 
   return (
     <AccessibilityProvider initialPrefs={initialPrefs}>
