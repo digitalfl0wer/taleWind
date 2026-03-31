@@ -133,5 +133,50 @@
     "grade_level": "1",
     "source_label": "curriculum",
     "approved": true
+  },
+  {
+    "id": "animals-016",
+    "subject": "animals",
+    "topic": "amphibians",
+    "content": "A frog is an amphibian. It starts as a tadpole in water. It grows legs and becomes an adult frog.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-017",
+    "subject": "animals",
+    "topic": "migration",
+    "content": "Some birds fly south when it gets cold. This long trip is called migration. They return when it is warm again.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-018",
+    "subject": "animals",
+    "topic": "camouflage",
+    "content": "A chameleon can change its color. This helps it blend in with leaves and branches. Blending in is called camouflage.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-019",
+    "subject": "animals",
+    "topic": "animal homes",
+    "content": "Beavers build homes called dams. They use sticks and mud to block the water. The pond keeps their home safe.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
+  },
+  {
+    "id": "animals-020",
+    "subject": "animals",
+    "topic": "endangered animals",
+    "content": "Some animals are endangered. That means there are very few left. People help by protecting their homes and keeping them safe.",
+    "grade_level": "1",
+    "source_label": "curriculum",
+    "approved": true
   }
 ]
