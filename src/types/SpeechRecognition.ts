@@ -9,10 +9,14 @@ export interface SpeechRecognitionErrorEvent {
 
 export interface SpeechRecognitionResult {
   transcript: string;
+  confidence?: number;
 }
 
 export interface SpeechRecognitionResultList {
-  [index: number]: { [index: number]: SpeechRecognitionResult };
+  [index: number]: {
+    [index: number]: SpeechRecognitionResult;
+    isFinal?: boolean;
+  };
   length: number;
 }
 
@@ -22,11 +26,13 @@ export interface SpeechRecognitionEvent {
 
 export interface SpeechRecognitionInstance {
   lang: string;
+  continuous?: boolean;
   interimResults: boolean;
   maxAlternatives: number;
   onresult: ((event: SpeechRecognitionEvent) => void) | null;
   onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
   onend: (() => void) | null;
+  onstart?: (() => void) | null;
   start: () => void;
   stop: () => void;
   abort: () => void;

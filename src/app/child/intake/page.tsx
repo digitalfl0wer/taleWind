@@ -78,7 +78,7 @@ function getToneCardStyle(): React.CSSProperties {
 /**
  * Magic Door intake experience across four child-friendly screens.
  */
-export default function IntakePage() {
+function IntakePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const childId = searchParams.get("childId") ?? undefined;
@@ -1025,6 +1025,22 @@ export default function IntakePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function IntakePage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="flex flex-1 items-center justify-center px-6 py-10">
+          <p style={{ color: colors.textMuted, fontFamily: typography.ui }}>
+            Loading intake...
+          </p>
+        </div>
+      }
+    >
+      <IntakePageContent />
+    </React.Suspense>
   );
 }
 

@@ -51,6 +51,7 @@ export function useSpeechRecognition({
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const timeoutRef = useRef<number | null>(null);
   const isStartedRef = useRef(false);
+  const hasDeliveredResultRef = useRef(false);
 
   /**
    * Returns a cached SpeechRecognition instance if supported.
@@ -65,8 +66,9 @@ export function useSpeechRecognition({
     if (!RecognitionCtor) return null;
     const recognition = new RecognitionCtor();
     recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 3;
+    recognition.continuous = true;
     recognitionRef.current = recognition;
     return recognition;
   }, []);
@@ -83,8 +85,10 @@ export function useSpeechRecognition({
       recognitionRef.current.onresult = null;
       recognitionRef.current.onerror = null;
       recognitionRef.current.onend = null;
+      recognitionRef.current.onstart = null;
       recognitionRef.current.abort();
     }
+    hasDeliveredResultRef.current = false;
     isStartedRef.current = false;
     setIsListening(false);
   }, []);
@@ -102,14 +106,51 @@ export function useSpeechRecognition({
         return;
       }
 
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        const transcript =
-          event.results?.[0]?.[0]?.transcript?.trim() ?? "";
-        if (!transcript) {
-          onFailure("unrecognized");
-        } else {
-          onResult(transcript);
+      if (timeoutRef.current && typeof window !== "undefined") {
+        window.clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      const armSilenceTimeout = (): void => {
+        if (typeof window === "undefined") return;
+        if (timeoutRef.current) {
+          window.clearTimeout(timeoutRef.current);
         }
+        timeoutRef.current = window.setTimeout(() => {
+          onFailure("silence");
+          stop();
+        }, timeoutMs);
+      };
+
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        const lastIndex = Math.max(0, event.results.length - 1);
+        const latest = event.results?.[lastIndex];
+        const transcript = latest?.[0]?.transcript?.trim() ?? "";
+        const confidence = latest?.[0]?.confidence ?? 0;
+        const isFinal = latest?.isFinal === true;
+
+        // Keep listening while speech is in progress.
+        armSilenceTimeout();
+
+        if (!transcript) {
+          return;
+        }
+
+        // Ignore interim chunks until finalization.
+        if (!isFinal) {
+          return;
+        }
+
+        // Very low-confidence one-word fragments are treated as unrecognized.
+        const wordCount = transcript.split(/\s+/).filter(Boolean).length;
+        if (confidence > 0 && confidence < 0.2 && wordCount <= 1) {
+          onFailure("unrecognized");
+          stop();
+          return;
+        }
+
+        hasDeliveredResultRef.current = true;
+        onResult(transcript);
         stop();
       };
 
@@ -125,17 +166,21 @@ export function useSpeechRecognition({
       recognition.onend = () => {
         isStartedRef.current = false;
         setIsListening(false);
+        if (!hasDeliveredResultRef.current && timeoutRef.current === null) {
+          onFailure("unrecognized");
+        }
+      };
+
+      recognition.onstart = () => {
+        setIsListening(true);
       };
 
       if (isStartedRef.current) return;
       isStartedRef.current = true;
-      setIsListening(true);
+      hasDeliveredResultRef.current = false;
       recognition.start();
 
-      timeoutRef.current = window.setTimeout(() => {
-        onFailure("silence");
-        stop();
-      }, timeoutMs);
+      armSilenceTimeout();
     },
     [getRecognition, onFailure, onResult, stop]
   );
