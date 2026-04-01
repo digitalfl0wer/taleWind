@@ -29,7 +29,7 @@ export function ChildShell({ children }: ChildShellProps) {
   return (
     <AccessibilityProvider initialPrefs={initialPrefs}>
       <div
-        className="relative flex min-h-screen flex-col overflow-hidden"
+        className="relative flex min-h-screen flex-col overflow-x-hidden overflow-y-auto"
         style={{ backgroundColor: colors.background }}
       >
         <StarfieldBackground />

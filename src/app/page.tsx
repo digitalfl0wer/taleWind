@@ -9,15 +9,17 @@ import { hexToRgba } from "@/app/components/ui/colorUtils";
 
 export default function Home() {
   const [float, setFloat] = useState({ x: 0, y: 0 });
-  const reduceMotion = useRef(false);
+  const [reduceMotion, setReduceMotion] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
   const frameRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    reduceMotion.current = media.matches;
     const handler = (event: MediaQueryListEvent) => {
-      reduceMotion.current = event.matches;
+      setReduceMotion(event.matches);
       if (event.matches) {
         setFloat({ x: 0, y: 0 });
       }
@@ -29,7 +31,7 @@ export default function Home() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const onMove = (event: MouseEvent) => {
-      if (reduceMotion.current) return;
+      if (reduceMotion) return;
       if (frameRef.current) window.cancelAnimationFrame(frameRef.current);
       frameRef.current = window.requestAnimationFrame(() => {
         const x = (event.clientX / window.innerWidth - 0.5) * 16;
@@ -42,7 +44,7 @@ export default function Home() {
       window.removeEventListener("mousemove", onMove);
       if (frameRef.current) window.cancelAnimationFrame(frameRef.current);
     };
-  }, []);
+  }, [reduceMotion]);
 
   const stars = useMemo(() => {
     return Array.from({ length: 32 }, (_, index) => {
@@ -145,7 +147,7 @@ export default function Home() {
               border: `2px solid ${hexToRgba(colors.primaryLight, 0.35)}`,
               boxShadow: shadows.cardRest,
               transform: `translate3d(${float.x}px, ${float.y}px, 0)`,
-              transition: reduceMotion.current ? "none" : "transform 0.12s ease-out",
+              transition: reduceMotion ? "none" : "transform 0.12s ease-out",
             }}
           >
             <Spriggle />
