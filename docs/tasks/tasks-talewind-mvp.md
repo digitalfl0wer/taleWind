@@ -107,7 +107,7 @@ Notes for 5.2–5.10: IntakeStep flow is start → name → color → animal →
 - [x] **9.1** After every session: update `child_memory` row in Supabase — append session data to `session_history`, refresh `derived_memory` inferences (e.g., "responds well to animal stories"), persist to Supabase
 - [x] **9.2** After every session: re-index child profile doc in `talewind-children` Azure AI Search — Story Agent always retrieves the latest version on next session
 - [x] **9.3** Derived memory inference — after 3+ sessions, GPT-4o mini analyzes session history and writes 2–4 natural-language inferences to `derived_memory` (e.g., "struggles with math vocabulary", "engages best with silly tone")
-- [x] **9.4** Verify RAG adaptation end-to-end — second session story must demonstrably reflect first session memory (include a test case in success metrics checklist)
+- [ ] **9.4** Verify RAG adaptation end-to-end — second session story must demonstrably reflect first session memory (include a test case in success metrics checklist)
 
 ---
 
