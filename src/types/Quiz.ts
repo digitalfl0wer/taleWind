@@ -19,11 +19,17 @@ export interface QuizQuestion {
   id: string;
   /** The question text shown to and spoken aloud for the child. */
   question: string;
+  /** Question type for mix of recall/inference/vocabulary. */
+  questionType: "recall" | "inference" | "vocabulary";
   /**
    * The expected answer or keywords the scoring function looks for.
    * This is server-side only — never sent to the client.
    */
   expectedAnswer: string;
+  /** Gentle hint that does not give away the answer. */
+  hint: string;
+  /** Scene number (0-based) this question references. */
+  sceneReference: number;
   /** Zero-based position in the quiz (0 = first question). */
   index: number;
 }
@@ -38,7 +44,10 @@ export interface RawQuizAgentOutput {
   questions: Array<{
     id: string;
     question: string;
+    questionType: "recall" | "inference" | "vocabulary";
     expectedAnswer: string;
+    hint: string;
+    sceneReference: number;
     index: number;
   }>;
 }

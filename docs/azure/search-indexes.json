@@ -51,18 +51,19 @@
           "_comment": "The curriculum text — max 150 words, first-grade reading level. Primary full-text search field."
         },
         {
-          "name": "gradeLevel",
-          "type": "Edm.Int32",
+          "name": "grade_level",
+          "type": "Edm.String",
           "key": false,
           "retrievable": true,
           "searchable": false,
           "filterable": true,
-          "sortable": true,
+          "sortable": false,
           "facetable": false,
-          "_comment": "Grade level target. Always 1 for Talewind MVP."
+          "_comment": "Grade level target. Always '1' for Talewind MVP. Stored as string."
         },
         {
-          "name": "sourceLabel",
+          "name": "source_label",
+          "_comment": "Stored as source_label (snake_case) in the actual Azure index.",
           "type": "Edm.String",
           "key": false,
           "retrievable": true,

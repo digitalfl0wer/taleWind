@@ -363,21 +363,16 @@ function buildChildSearchDoc(
 ): ChildSearchDoc {
   return {
     id: profile.id,
-    childId: profile.id,
     name: profile.name,
-    age: profile.age,
-    grade: profile.grade,
-    interests: profile.interests,
-    readingComfort: profile.readingComfort,
+    subject: profile.preferredSubject ?? "",
     favoriteColor: profile.favoriteColor ?? "",
     favoriteAnimal: profile.favoriteAnimal ?? "",
-    latestPersonalDetail: profile.latestPersonalDetail ?? "",
-    preferredSubject: profile.preferredSubject ?? "",
     readingMode: profile.readingMode ?? "",
     storyTone: profile.storyTone ?? "",
-    currentAdaptation: memoryFields.currentAdaptation,
-    recentSessionsSummary: memoryFields.recentSessionsSummary,
-    derivedMemoryText: memoryFields.derivedMemoryText,
+    personalDetails: profile.latestPersonalDetail ?? "",
+    currentDifficulty: memoryFields.currentAdaptation,
+    sessionCount: 0,
+    lastQuestionAsked: profile.lastQuestionAsked ?? -1,
     updatedAt: memoryFields.updatedAt,
   };
 }
@@ -493,17 +488,26 @@ export async function POST(request: Request): Promise<Response> {
       nextStep: "confirm",
       listen: false,
     });
+    console.info("[intake] step=animal", {
+      input: sanitizedInput,
+      nextStep: response.nextStep,
+      hasGpt: Boolean(gptText),
+    });
     return Response.json(response);
   }
 
   if (step === "confirm") {
-    const gptText =
-      (await getSpriggleTextFromGpt(step, sanitizedInput, sessionData)) ?? null;
-    const spriggleText = gptText ?? getFallbackText(step, sessionData);
+    const spriggleText =
+      (await getSpriggleTextFromGpt(step, sanitizedInput, sessionData)) ??
+      getFallbackText(step, sessionData);
     const response = await buildIntakeResponse({
       spriggleText,
       nextStep: "subject",
       listen: false,
+    });
+    console.info("[intake] step=confirm", {
+      nextStep: response.nextStep,
+      hasGpt: Boolean(spriggleText),
     });
     return Response.json(response);
   }
@@ -529,9 +533,9 @@ export async function POST(request: Request): Promise<Response> {
       ...sessionData,
       subject: sanitizedInput,
     };
-    const gptText =
-      (await getSpriggleTextFromGpt(step, sanitizedInput, updatedSession)) ?? null;
-    const spriggleText = gptText ?? getFallbackText(step, updatedSession);
+    const spriggleText =
+      (await getSpriggleTextFromGpt(step, sanitizedInput, updatedSession)) ??
+      getFallbackText(step, updatedSession);
     const response = await buildIntakeResponse({
       spriggleText,
       nextStep: "reading_mode",
@@ -548,9 +552,9 @@ export async function POST(request: Request): Promise<Response> {
       ...sessionData,
       readingMode: sanitizedInput,
     };
-    const gptText =
-      (await getSpriggleTextFromGpt(step, sanitizedInput, updatedSession)) ?? null;
-    const spriggleText = gptText ?? getFallbackText(step, updatedSession);
+    const spriggleText =
+      (await getSpriggleTextFromGpt(step, sanitizedInput, updatedSession)) ??
+      getFallbackText(step, updatedSession);
     const response = await buildIntakeResponse({
       spriggleText,
       nextStep: "tone",
@@ -581,9 +585,9 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json({ error: "Missing intake fields" }, { status: 400 });
     }
 
-    const gptText =
-      (await getSpriggleTextFromGpt(step, sanitizedInput, updatedSession)) ?? null;
-    const spriggleText = gptText ?? getFallbackText(step, updatedSession);
+    const spriggleText =
+      (await getSpriggleTextFromGpt(step, sanitizedInput, updatedSession)) ??
+      getFallbackText(step, updatedSession);
 
     try {
       const createdProfile = await createChildProfile({
@@ -631,7 +635,14 @@ export async function POST(request: Request): Promise<Response> {
         updatedAt: now,
       });
 
-      await indexChildProfileDoc(searchDoc);
+      try {
+        await indexChildProfileDoc(searchDoc);
+      } catch (error) {
+        console.warn(
+          "[intake] Search index update failed (non-fatal):",
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      }
 
       const response = await buildIntakeResponse({
         spriggleText,
@@ -713,7 +724,14 @@ export async function POST(request: Request): Promise<Response> {
         updatedAt: now,
       });
 
-      await indexChildProfileDoc(searchDoc);
+      try {
+        await indexChildProfileDoc(searchDoc);
+      } catch (error) {
+        console.warn(
+          "[intake] Search index update failed (non-fatal):",
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      }
 
       const gptText =
         (await getSpriggleTextFromGpt(step, sanitizedInput, sessionData)) ??

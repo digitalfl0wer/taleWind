@@ -12,9 +12,10 @@ export interface PillProps
  * Builds pill styles for voice chips and small option buttons.
  *
  * @param active - Whether the pill is active.
+ * @param disabled - Whether the pill is disabled.
  * @returns CSSProperties for the pill.
  */
-function getPillStyle(active: boolean): React.CSSProperties {
+function getPillStyle(active: boolean, disabled: boolean): React.CSSProperties {
   return {
     borderRadius: radii.pill,
     fontFamily: typography.ui,
@@ -24,6 +25,8 @@ function getPillStyle(active: boolean): React.CSSProperties {
     backgroundColor: active ? colors.primary : "transparent",
     color: active ? colors.textPrimary : colors.textMuted,
     border: `2px solid ${active ? colors.primary : colors.primaryLight}`,
+    opacity: disabled ? 0.5 : 1,
+    cursor: disabled ? "not-allowed" : "pointer",
   };
 }
 
@@ -44,7 +47,7 @@ export function Pill({
       type={type}
       aria-label={props["aria-label"] ?? label}
       className={`inline-flex items-center justify-center text-sm font-semibold uppercase tracking-wide ${className ?? ""}`}
-      style={{ ...getPillStyle(active), ...style }}
+      style={{ ...getPillStyle(active, Boolean(props.disabled)), ...style }}
     >
       {label}
     </button>

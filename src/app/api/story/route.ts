@@ -4,6 +4,7 @@ import {
   retrieveChildProfileDoc,
   retrieveCurriculumChunks,
 } from "@/lib/azure/search";
+import { getChildById } from "@/lib/supabase/profiles";
 import { checkStoryOutput } from "@/lib/safety/checkStoryOutput";
 import type { StoryRequest, StoryResponse } from "@/types/Api";
 import type { ChildSearchDoc, Subject, StoryTone } from "@/types/Child";
@@ -122,16 +123,9 @@ function buildCurriculumContext(chunks: CurriculumSearchDoc[]): string {
  * @returns Difficulty label: "easy" | "medium" | "hard".
  */
 function determineDifficulty(child: ChildSearchDoc): "easy" | "medium" | "hard" {
-  const base =
-    child.readingComfort === "beginner"
-      ? "easy"
-      : child.readingComfort === "confident"
-        ? "hard"
-        : "medium";
-
-  if (child.currentAdaptation === "simplify") return "easy";
-  if (child.currentAdaptation === "enrich") return "hard";
-  return base;
+  if (child.currentDifficulty === "simplify") return "easy";
+  if (child.currentDifficulty === "enrich") return "hard";
+  return "medium";
 }
 
 /**
@@ -168,9 +162,44 @@ function validateChildProfile(child: ChildSearchDoc): string | null {
   if (!child.name) return "Missing child name";
   if (!child.favoriteColor) return "Missing favorite color";
   if (!child.favoriteAnimal) return "Missing favorite animal";
-  if (!child.latestPersonalDetail) return "Missing latest personal detail";
+  if (!child.personalDetails) return "Missing latest personal detail";
   if (!isValidStoryTone(child.storyTone)) return "Missing story tone";
   return null;
+}
+
+/**
+ * Hydrates a child search doc with Supabase profile fields when missing.
+ *
+ * @param childId - Child UUID.
+ * @param doc - Child search doc from Azure Search (may be null).
+ * @returns Hydrated ChildSearchDoc or null if no profile exists.
+ */
+async function hydrateChildProfile(
+  childId: string,
+  doc: ChildSearchDoc | null
+): Promise<ChildSearchDoc | null> {
+  const profile = await getChildById(childId);
+  if (!profile) return doc;
+
+  const now = new Date().toISOString();
+  return {
+    id: profile.id,
+    name: profile.name,
+    subject: profile.preferredSubject ?? doc?.subject ?? "",
+    readingMode: profile.readingMode ?? doc?.readingMode ?? "",
+    storyTone: profile.storyTone ?? doc?.storyTone ?? "",
+    favoriteColor: profile.favoriteColor ?? doc?.favoriteColor ?? "",
+    favoriteAnimal: profile.favoriteAnimal ?? doc?.favoriteAnimal ?? "",
+    personalDetails:
+      profile.latestPersonalDetail ??
+      doc?.personalDetails ??
+      profile.favoriteAnimal ??
+      "",
+    currentDifficulty: doc?.currentDifficulty ?? "hold",
+    sessionCount: doc?.sessionCount ?? 0,
+    lastQuestionAsked: profile.lastQuestionAsked ?? doc?.lastQuestionAsked ?? -1,
+    updatedAt: doc?.updatedAt ?? now,
+  };
 }
 
 /**
@@ -199,9 +228,7 @@ function buildStoryUserMessage(
     `Child name: ${child.name}`,
     `Favorite color: ${child.favoriteColor}`,
     `Favorite animal: ${child.favoriteAnimal}`,
-    `Latest personal detail (highest priority): ${child.latestPersonalDetail}`,
-    `Derived memory: ${child.derivedMemoryText || "None"}`,
-    `Recent sessions summary: ${child.recentSessionsSummary || "None"}`,
+    `Latest personal detail (highest priority): ${child.personalDetails}`,
     "",
     "Curriculum chunks (use ONLY these facts):",
     curriculumContext,
@@ -251,14 +278,27 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  if (!childProfile) {
+  let hydratedProfile: ChildSearchDoc | null = null;
+  try {
+    hydratedProfile = await hydrateChildProfile(childId, childProfile);
+  } catch (err) {
+    console.error(
+      "[api/story] Failed to hydrate child profile.",
+      err instanceof Error ? err.message : "Unknown error"
+    );
+    return Response.json(
+      { story: null, safety: null, error: "Failed to load child profile." } as StoryResponse,
+      { status: 500 }
+    );
+  }
+  if (!hydratedProfile) {
     return Response.json(
       { story: null, safety: null, error: "Child profile not found." } as StoryResponse,
       { status: 404 }
     );
   }
 
-  const profileError = validateChildProfile(childProfile);
+  const profileError = validateChildProfile(hydratedProfile);
   if (profileError) {
     return Response.json(
       { story: null, safety: null, error: profileError } as StoryResponse,
@@ -268,18 +308,30 @@ export async function POST(request: Request): Promise<Response> {
 
   let curriculumChunks: CurriculumSearchDoc[] = [];
   try {
-    const interests = Array.isArray(childProfile.interests)
-      ? childProfile.interests.join(" ")
-      : "";
-    const combinedSearch = [searchText, interests, childProfile.latestPersonalDetail]
+    const combinedSearch = [
+      searchText,
+      hydratedProfile.personalDetails,
+    ]
       .map((value) => sanitizeInput(value, 120))
       .filter(Boolean)
       .join(" ");
-    curriculumChunks = await retrieveCurriculumChunks(
-      subject,
-      combinedSearch || "*",
-      4
-    );
+
+    // Retry logic: Azure Search may have indexing delays
+    const maxRetries = 2;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      curriculumChunks = await retrieveCurriculumChunks(
+        subject,
+        combinedSearch || "*",
+        4
+      );
+
+      if (curriculumChunks.length >= 3) break;
+
+      // If still insufficient and not the last attempt, wait and retry
+      if (attempt < maxRetries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1)));
+      }
+    }
   } catch (err) {
     console.error(
       "[api/story] Failed to retrieve curriculum chunks. sessionId omitted.",
@@ -292,6 +344,9 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   if (curriculumChunks.length < 3) {
+    console.error(
+      `[api/story] Insufficient curriculum chunks for subject="${subject}": got ${curriculumChunks.length} after ${2} retries`
+    );
     return Response.json(
       { story: null, safety: null, error: "Insufficient curriculum chunks." } as StoryResponse,
       { status: 500 }
@@ -299,7 +354,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const userMessage = buildStoryUserMessage(
-    childProfile,
+    hydratedProfile,
     subject,
     sessionNumber,
     curriculumChunks
@@ -337,7 +392,7 @@ export async function POST(request: Request): Promise<Response> {
 
   const storyId = randomUUID();
   const createdAt = new Date().toISOString();
-  const tone = childProfile.storyTone as StoryTone;
+  const tone = hydratedProfile.storyTone as StoryTone;
 
   const story: Story = {
     id: storyId,

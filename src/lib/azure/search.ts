@@ -52,11 +52,11 @@ function getSearchCredentials(): {
  *
  * @returns Typed SearchClient<CurriculumSearchDoc>.
  */
-function getCurriculumSearchClient(): SearchClient<CurriculumSearchDoc> {
+function getCurriculumSearchClient(): SearchClient<Record<string, unknown>> {
   const { endpoint, credential } = getSearchCredentials();
   const indexName =
     process.env.AZURE_SEARCH_CURRICULUM_INDEX?.trim() ?? "talewind-curriculum";
-  return new SearchClient<CurriculumSearchDoc>(endpoint, indexName, credential);
+  return new SearchClient<Record<string, unknown>>(endpoint, indexName, credential);
 }
 
 /**
@@ -103,21 +103,78 @@ export async function retrieveCurriculumChunks(
 ): Promise<CurriculumSearchDoc[]> {
   const client = getCurriculumSearchClient();
 
-  const options: SearchOptions<CurriculumSearchDoc> = {
-    filter: `subject eq '${subject}' and approved eq true`,
+  const baseOptions: SearchOptions<Record<string, unknown>> = {
     top: Math.min(Math.max(topK, 3), 5), // clamp between 3 and 5
-    select: ["id", "subject", "topic", "content", "gradeLevel", "sourceLabel", "approved"],
+  };
+
+  const mapDoc = (doc: Record<string, unknown>): CurriculumSearchDoc => {
+    const gradeRaw = doc["grade_level"];
+    const gradeLevel =
+      typeof gradeRaw === "number"
+        ? gradeRaw
+        : typeof gradeRaw === "string"
+          ? Number(gradeRaw)
+          : 1;
+    const safeGrade = Number.isFinite(gradeLevel) ? gradeLevel : 1;
+    const approvedRaw = doc["approved"];
+    const approved =
+      approvedRaw === true ||
+      approvedRaw === "true" ||
+      approvedRaw === 1 ||
+      approvedRaw === "1";
+
+    return {
+      id: String(doc["id"] ?? ""),
+      subject: String(doc["subject"] ?? ""),
+      topic: String(doc["topic"] ?? ""),
+      content: String(doc["content"] ?? ""),
+      gradeLevel: safeGrade,
+      sourceLabel: String(doc["source_label"] ?? ""),
+      approved,
+    };
+  };
+
+  const runSearch = async (
+    effectiveSearchText: string,
+    filter?: string
+  ): Promise<CurriculumSearchDoc[]> => {
+    const options: SearchOptions<Record<string, unknown>> = {
+      ...baseOptions,
+      filter,
+    };
+    const results = await client.search(effectiveSearchText, options);
+    const chunks: CurriculumSearchDoc[] = [];
+    for await (const result of results.results) {
+      chunks.push(mapDoc(result.document as Record<string, unknown>));
+    }
+    return chunks;
   };
 
   try {
-    const results = await client.search(searchText, options);
-    const chunks: CurriculumSearchDoc[] = [];
+    const queryCandidates = Array.from(
+      new Set([searchText, "*"].filter((value) => value && value.trim().length > 0))
+    );
 
-    for await (const result of results.results) {
-      chunks.push(result.document);
+    for (const query of queryCandidates) {
+      // First try strict approved filter
+      let chunks = await runSearch(query, `subject eq '${subject}' and approved eq true`);
+      if (chunks.length >= 3) return chunks;
+
+      // Retry without approved filter (in case approved is stored as string)
+      chunks = await runSearch(query, `subject eq '${subject}'`);
+      const approvedOnly = chunks.filter((chunk) => chunk.approved);
+      if (approvedOnly.length >= 3) return approvedOnly;
+
+      // Final fallback: no filter, then filter client-side (case-insensitive subject)
+      chunks = await runSearch(query);
+      const subjectFiltered = chunks.filter(
+        (chunk) => chunk.subject.toLowerCase() === subject.toLowerCase()
+      );
+      const approvedFiltered = subjectFiltered.filter((chunk) => chunk.approved);
+      if (approvedFiltered.length >= 3) return approvedFiltered;
     }
 
-    return chunks;
+    return [];
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Unknown search error";
@@ -143,8 +200,30 @@ export async function retrieveChildProfileDoc(
   const client = getChildrenSearchClient();
 
   try {
-    const result = await client.getDocument(childId);
-    return result ?? null;
+    const result = (await client.getDocument(childId)) as
+      | Record<string, unknown>
+      | null;
+    if (!result) return null;
+
+    return {
+      id: String(result["id"] ?? ""),
+      childId: String(result["id"] ?? ""),
+      name: String(result["name"] ?? ""),
+      age: 6,
+      grade: 1,
+      interests: [],
+      readingComfort: "beginner",
+      favoriteColor: String(result["favoriteColor"] ?? ""),
+      favoriteAnimal: String(result["favoriteAnimal"] ?? ""),
+      latestPersonalDetail: String(result["personalDetails"] ?? ""),
+      preferredSubject: String(result["subject"] ?? ""),
+      readingMode: String(result["readingMode"] ?? ""),
+      storyTone: String(result["storyTone"] ?? ""),
+      currentAdaptation: String(result["currentDifficulty"] ?? "hold"),
+      recentSessionsSummary: "[]",
+      derivedMemoryText: "",
+      updatedAt: String(result["updatedAt"] ?? ""),
+    };
   } catch (err) {
     // Azure Search throws a 404-like error when the document doesn't exist
     if (err instanceof Error && err.message.includes("404")) {
@@ -173,7 +252,30 @@ export async function indexChildProfileDoc(doc: ChildSearchDoc): Promise<void> {
   const client = getChildrenSearchClient();
 
   try {
-    const result = await client.mergeOrUploadDocuments([doc]);
+    const sessionCount = (() => {
+      try {
+        const parsed = JSON.parse(doc.recentSessionsSummary);
+        return Array.isArray(parsed) ? parsed.length : 0;
+      } catch {
+        return 0;
+      }
+    })();
+
+    const payload = {
+      id: doc.id,
+      name: doc.name,
+      subject: doc.preferredSubject,
+      readingMode: doc.readingMode,
+      storyTone: doc.storyTone,
+      favoriteColor: doc.favoriteColor,
+      favoriteAnimal: doc.favoriteAnimal,
+      personalDetails: doc.latestPersonalDetail,
+      currentDifficulty: doc.currentAdaptation,
+      sessionCount,
+      lastQuestionAsked: 0,
+      updatedAt: doc.updatedAt,
+    };
+    const result = await client.mergeOrUploadDocuments([payload]);
     const failed = result.results.filter((r) => !r.succeeded);
 
     if (failed.length > 0) {
@@ -208,7 +310,17 @@ export async function indexCurriculumChunks(
   const client = getCurriculumSearchClient();
 
   try {
-    const result = await client.mergeOrUploadDocuments(docs);
+    // Map to the actual Azure index field names (snake_case, grade_level stored as Edm.String)
+    const payload = docs.map((doc) => ({
+      id: doc.id,
+      subject: doc.subject,
+      topic: doc.topic,
+      content: doc.content,
+      grade_level: String(doc.gradeLevel),
+      source_label: doc.sourceLabel,
+      approved: doc.approved,
+    }));
+    const result = await client.mergeOrUploadDocuments(payload);
     const succeeded = result.results.filter((r) => r.succeeded).length;
     const failed = result.results.filter((r) => !r.succeeded).length;
 

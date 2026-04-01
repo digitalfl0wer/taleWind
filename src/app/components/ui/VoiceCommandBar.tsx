@@ -6,7 +6,7 @@ import { hexToRgba } from "./colorUtils";
 import { useAccessibility } from "../AccessibilityProvider";
 import { Pill } from "./Pill";
 
-export type VoiceCommandMode = "intake" | "story";
+export type VoiceCommandMode = "intake" | "story" | "quiz";
 
 export interface VoiceCommandBarProps {
   isListening: boolean;
@@ -54,7 +54,11 @@ export function VoiceCommandBar({
           style={{ backgroundColor: colors.accent }}
         />
         <span className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
-          {mode === "intake" ? "Listening for your voice" : "Voice commands"}
+          {mode === "intake"
+            ? "Listening for your voice"
+            : mode === "story"
+              ? "Voice commands"
+              : "Listening for your answer"}
         </span>
       </div>
       <div className="hidden flex-wrap gap-2 md:flex">

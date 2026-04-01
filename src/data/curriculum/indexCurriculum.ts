@@ -15,9 +15,9 @@ import { createRequire } from "node:module";
 import type {
   CurriculumSearchDoc,
   RawCurriculumEntry,
-} from "@/types/Curriculum";
-import { indexCurriculumChunks } from "@/lib/azure/search";
-import { getSupabaseServiceClient } from "@/lib/supabase/client";
+} from "../../types/Curriculum.ts";
+import { indexCurriculumChunks } from "../../lib/azure/search.ts";
+import { getSupabaseServiceClient } from "../../lib/supabase/client.ts";
 
 /**
  * Raw curriculum entry as stored in JSON files.
@@ -106,7 +106,7 @@ async function indexCurriculum(): Promise<void> {
     const supabase = getSupabaseServiceClient();
     const { data, error } = await supabase
       .from("curriculum_chunks")
-      .upsert(supabaseRows, { onConflict: "embedding_id" })
+      .insert(supabaseRows)
       .select("id");
 
     if (error) {
@@ -135,4 +135,11 @@ async function indexCurriculum(): Promise<void> {
 }
 
 // Run the function
-indexCurriculum();
+indexCurriculum().catch((error) => {
+  console.error(
+    "[indexCurriculum] Unhandled error:",
+    error instanceof Error ? error.message : error
+  );
+  console.error(error);
+  process.exit(1);
+});

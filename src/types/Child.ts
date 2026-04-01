@@ -84,6 +84,10 @@ export interface SessionMemoryEntry {
   adaptationResult: "simplify" | "enrich" | "hold";
   /** Scenes the child asked to make easier (voice command). */
   madeEasierScenes: string[];
+  /** Topics the child struggled with in this session. */
+  struggledWith: string[];
+  /** Themes or topics that worked well for the child. */
+  workedWell: string[];
   /** Curriculum topics covered in this session. */
   topicsCovered: string[];
   /** Tone used in this session. */
@@ -143,22 +147,15 @@ export interface ChildMemory {
 export interface ChildSearchDoc {
   /** Primary key — must be the child's UUID. */
   id: string;
-  childId: string;
   name: string;
-  age: number;
-  grade: number;
-  interests: string[];
-  readingComfort: string;
-  favoriteColor: string;
-  favoriteAnimal: string;
-  latestPersonalDetail: string;
-  preferredSubject: string;
+  subject: string;
   readingMode: string;
   storyTone: string;
-  currentAdaptation: string;
-  /** Last 3 session summaries, serialised as JSON string for full-text retrieval. */
-  recentSessionsSummary: string;
-  /** Derived memory inferences as a single joined string for full-text retrieval. */
-  derivedMemoryText: string;
+  favoriteColor: string;
+  favoriteAnimal: string;
+  personalDetails: string;
+  currentDifficulty: string;
+  sessionCount: number;
+  lastQuestionAsked: number;
   updatedAt: string; // ISO 8601
 }
