@@ -28,6 +28,67 @@ const CHILD_SAFE_STYLE_PREFIX =
   "flat illustration, age 5-7 appropriate, no scary elements, no realistic violence, " +
   "whimsical and cozy: ";
 
+const NON_PHOTO_GUARDRAIL_SUFFIX =
+  " Do not generate photographs. Do not generate photorealistic images. " +
+  "Do not use camera/lens/cinematic photo style. Use only illustrated children's-book visuals. " +
+  "Do not include any letters, words, numbers, symbols, logos, captions, labels, watermark, or signature in the image.";
+
+const DIVERSITY_GUARDRAIL_SUFFIX =
+  " If people are shown, represent them as people with respectful human features. " +
+  "Include diverse skin tones and facial features across races. " +
+  "Avoid stereotypes, caricatures, or dehumanizing depictions.";
+
+const SPECIES_SEPARATION_GUARDRAIL_SUFFIX =
+  " Keep species boundaries clear: humans must look human and animals must look animal. " +
+  "Do not blend humans and animals. Do not give humans animal anatomy. " +
+  "Do not give animals human anatomy, human faces, or human skin.";
+
+const PHOTO_STYLE_TERMS = [
+  "photo",
+  "photograph",
+  "photographic",
+  "photorealistic",
+  "realistic photo",
+  "camera",
+  "dslr",
+  "lens",
+  "cinematic",
+  "ultra realistic",
+  "8k",
+];
+
+const TEXT_OVERLAY_TERMS = [
+  "text",
+  "words",
+  "letters",
+  "numbers",
+  "typography",
+  "caption",
+  "label",
+  "logo",
+  "watermark",
+  "signature",
+];
+
+/**
+ * Removes obvious photo-style terms from a prompt.
+ *
+ * @param prompt - Raw user/model prompt text.
+ * @returns Prompt text with photo-oriented terms stripped.
+ */
+function stripPhotoStyleTerms(prompt: string): string {
+  let sanitized = prompt;
+  for (const term of PHOTO_STYLE_TERMS) {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    sanitized = sanitized.replace(new RegExp(escaped, "gi"), "");
+  }
+  for (const term of TEXT_OVERLAY_TERMS) {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    sanitized = sanitized.replace(new RegExp(escaped, "gi"), "");
+  }
+  return sanitized.replace(/\s+/g, " ").trim();
+}
+
 // ── BFL model ID → URL path segment mapping ───────────────────────────────────
 // Source: https://learn.microsoft.com/azure/ai-foundry/how-to/deploy-use-flux
 // The model ID (used in request body) and the URL path segment are NOT identical.
@@ -81,9 +142,13 @@ export async function generateSceneImage(
   };
 
   // BFL API uses width/height (not size) and num_images (not n).
+  const guardedPrompt = `${CHILD_SAFE_STYLE_PREFIX}${stripPhotoStyleTerms(
+    request.prompt
+  )}${NON_PHOTO_GUARDRAIL_SUFFIX}${DIVERSITY_GUARDRAIL_SUFFIX}${SPECIES_SEPARATION_GUARDRAIL_SUFFIX}`;
+
   const body = {
     model: deployment,
-    prompt: `${CHILD_SAFE_STYLE_PREFIX}${request.prompt}`,
+    prompt: guardedPrompt,
     width: 1024,
     height: 1024,
     output_format: "png",

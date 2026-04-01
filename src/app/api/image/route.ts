@@ -16,17 +16,11 @@ function sanitizeInput(raw: string | undefined, maxLen: number): string {
 /**
  * Builds a small SVG fallback illustration as a data URL.
  * Used in development only when FLUX is unavailable.
+ * Contains no text to match the no-letters/no-words image guardrail.
  *
- * @param prompt - Scene prompt text for the label.
  * @returns Data URL for an SVG placeholder image.
  */
-function buildFallbackImageDataUrl(prompt: string): string {
-  const label = sanitizeInput(prompt, 80) || "Talewind scene";
-  const escaped = label
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-
+function buildFallbackImageDataUrl(): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
@@ -37,9 +31,8 @@ function buildFallbackImageDataUrl(prompt: string): string {
   <rect width="1024" height="1024" fill="url(#bg)"/>
   <circle cx="260" cy="280" r="120" fill="#bfdbfe"/>
   <circle cx="760" cy="700" r="160" fill="#fde68a"/>
-  <rect x="112" y="760" width="800" height="160" rx="24" fill="#ffffff" opacity="0.86"/>
-  <text x="512" y="835" text-anchor="middle" font-size="36" font-family="Arial, sans-serif" fill="#1f2937">Image unavailable</text>
-  <text x="512" y="878" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" fill="#374151">${escaped}</text>
+  <circle cx="512" cy="512" r="180" fill="#ffffff" opacity="0.72"/>
+  <circle cx="512" cy="512" r="110" fill="#a7f3d0" opacity="0.92"/>
 </svg>`;
 
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
@@ -83,7 +76,7 @@ export async function POST(request: Request): Promise<Response> {
     if (process.env.NODE_ENV !== "production") {
       // Development: return SVG fallback so story flow continues during local work.
       return Response.json({
-        imageUrl: buildFallbackImageDataUrl(prompt),
+        imageUrl: buildFallbackImageDataUrl(),
         error: "Image generation unavailable. Returned fallback illustration.",
       } as ImageResponse);
     }
