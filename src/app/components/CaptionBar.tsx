@@ -69,8 +69,16 @@ export function CaptionBar({
 
   return (
     <div
-      className="captions flex flex-wrap gap-2"
-      style={{ fontFamily: typography.narration, fontSize: `${fontSizePx}px` }}
+      className="captions flex flex-wrap gap-x-3 gap-y-2"
+      style={{
+        fontFamily: typography.ui,
+        fontSize: `${fontSizePx}px`,
+        lineHeight: 1.65,
+        letterSpacing: "0.02em",
+        wordSpacing: "0.12em",
+        fontWeight: 500,
+        textShadow: "none",
+      }}
       aria-live="polite"
     >
       {words.map((word) => (
@@ -80,7 +88,12 @@ export function CaptionBar({
             color:
               word.index === activeIndex
                 ? colors.primaryLight
-                : colors.textMuted,
+                : colors.textPrimary,
+            display: "inline-block",
+            transform: word.index === activeIndex ? "scale(1.14)" : "scale(1)",
+            transformOrigin: "center bottom",
+            transition: "transform 120ms ease, color 120ms ease",
+            textShadow: "none",
           }}
         >
           {word.text}

@@ -86,7 +86,7 @@ function loadStoryFromStorage(): Story | null {
 /**
  * Quiz UI for a single question at a time.
  */
-export default function QuizPage() {
+function QuizPageContent() {
   const searchParams = useSearchParams();
   const childId = searchParams.get("childId") ?? "";
   const storyParam = searchParams.get("story");
@@ -394,7 +394,7 @@ export default function QuizPage() {
               </div>
               {!isSupported && (
                 <p className="text-sm" style={{ color: colors.textMuted }}>
-                  Voice input isn't available here. Use the text box instead.
+                  Voice input isn&apos;t available here. Use the text box instead.
                 </p>
               )}
               <VoiceCommandBar isListening={isListening} mode="quiz" />
@@ -411,5 +411,21 @@ export default function QuizPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function QuizPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="flex flex-1 items-center justify-center px-6 py-10">
+          <p style={{ color: colors.textMuted, fontFamily: typography.ui }}>
+            Loading quiz...
+          </p>
+        </div>
+      }
+    >
+      <QuizPageContent />
+    </React.Suspense>
   );
 }

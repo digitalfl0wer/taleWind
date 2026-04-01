@@ -7,6 +7,7 @@ export interface SceneCardProps {
   imageUrl: string | null;
   imageAlt: string;
   isMarkedEasy: boolean;
+  onImageLoaded?: () => void;
   children: React.ReactNode;
 }
 
@@ -18,6 +19,7 @@ export function SceneCard({
   imageUrl,
   imageAlt,
   isMarkedEasy,
+  onImageLoaded,
   children,
 }: SceneCardProps) {
   return (
@@ -36,8 +38,9 @@ export function SceneCard({
           <img
             src={imageUrl}
             alt={imageAlt}
-            className="w-full object-cover"
+            className="w-full max-h-[45vh] object-cover md:max-h-[52vh]"
             style={{ borderRadius: radii.card }}
+            onLoad={onImageLoaded}
           />
         ) : (
           <div

@@ -30,6 +30,7 @@ import type { WordTiming } from "@/lib/azure/speech";
 import { useVoiceCommands } from "./hooks/useVoiceCommands";
 
 const DISABLED_COMMANDS: VoiceCommandKey[] = ["quiz_answer"];
+const QUIZ_STORAGE_KEY = "talewind-active-story";
 
 /**
  * Maps narration speed preference to SSML rate.
@@ -105,7 +106,7 @@ function buildImageAlt(scene: StoryScene): string {
 /**
  * Story reader with narration, captions, and voice commands.
  */
-export default function StoryPage() {
+function StoryPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const childId = searchParams.get("childId");
@@ -122,13 +123,18 @@ export default function StoryPage() {
   const [wordTimings, setWordTimings] = useState<WordTiming[]>([]);
   const [currentTimeMs, setCurrentTimeMs] = useState<number>(0);
   const [isNarrating, setIsNarrating] = useState<boolean>(false);
+  const [isNarrationLoading, setIsNarrationLoading] = useState<boolean>(false);
+  const [narrationSceneIndex, setNarrationSceneIndex] = useState<number | null>(
+    null
+  );
   const [madeEasierScenes, setMadeEasierScenes] = useState<number[]>([]);
+  const [loadedSceneImages, setLoadedSceneImages] = useState<number[]>([]);
+  const [narratedScenes, setNarratedScenes] = useState<number[]>([]);
   const [isLoadingStory, setIsLoadingStory] = useState<boolean>(false);
   const [isAppendingScene, setIsAppendingScene] = useState<boolean>(false);
   const [hasUserInteracted, setHasUserInteracted] = useState<boolean>(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
   const pendingPlayRef = useRef<(() => Promise<void>) | null>(null);
 
   const activeScene = story?.scenes[activeIndex] ?? null;
@@ -137,24 +143,20 @@ export default function StoryPage() {
   const shouldMockExtend = process.env.NEXT_PUBLIC_MOCK_STORY_EXTEND === "true";
   const missingParamsText =
     "Oops! I need your story setup. Let's head back to the Magic Door. 🌟";
+  const isLastScene = Boolean(story && activeIndex >= story.scenes.length - 1);
+  const isActiveSceneImageLoaded = Boolean(
+    activeScene && loadedSceneImages.includes(activeScene.index)
+  );
+  const hasNarratedActiveScene = Boolean(
+    activeScene && narratedScenes.includes(activeScene.index)
+  );
 
   /**
-   * Updates the narration timer for caption sync.
+   * Updates caption clock from the active audio element.
    */
-  const syncCaptionTime = useCallback(() => {
+  const updateCaptionTime = useCallback(() => {
     if (!audioRef.current) return;
     setCurrentTimeMs(audioRef.current.currentTime * 1000);
-    animationFrameRef.current = requestAnimationFrame(syncCaptionTime);
-  }, []);
-
-  /**
-   * Stops caption sync loop.
-   */
-  const stopCaptionSync = useCallback(() => {
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
   }, []);
 
   /**
@@ -164,46 +166,52 @@ export default function StoryPage() {
    * @param timings - Word timing data.
    */
   const playNarration = useCallback(
-    async (audioBase64: string, timings: WordTiming[]) => {
+    async (sceneIndex: number, audioBase64: string, timings: WordTiming[]) => {
       if (!audioBase64) return;
       if (audioRef.current) {
         audioRef.current.pause();
       }
       const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
       audioRef.current = audio;
+      setNarrationSceneIndex(sceneIndex);
       setWordTimings(timings);
       setCurrentTimeMs(0);
-      setIsNarrating(true);
 
       audio.onended = () => {
         setIsNarrating(false);
-        stopCaptionSync();
+        updateCaptionTime();
       };
       audio.onpause = () => {
         setIsNarrating(false);
-        stopCaptionSync();
+        updateCaptionTime();
       };
+      audio.onplay = () => {
+        setIsNarrating(true);
+        updateCaptionTime();
+      };
+      audio.ontimeupdate = updateCaptionTime;
+      audio.onseeking = updateCaptionTime;
+      audio.onseeked = updateCaptionTime;
 
       try {
         await audio.play();
-        syncCaptionTime();
+        updateCaptionTime();
       } catch (error) {
         const isNotAllowedError =
           error instanceof DOMException && error.name === "NotAllowedError";
         if (isNotAllowedError) {
           console.warn("[story] audio playback blocked by browser policy");
           // Store the play function to retry when user interacts
-          pendingPlayRef.current = () => audio.play().then(() => syncCaptionTime());
+          pendingPlayRef.current = () =>
+            audio.play().then(() => updateCaptionTime());
           setIsNarrating(false);
-          stopCaptionSync();
         } else {
           console.warn("[story] audio playback failed", error);
           setIsNarrating(false);
-          stopCaptionSync();
         }
       }
     },
-    [stopCaptionSync, syncCaptionTime]
+    [updateCaptionTime]
   );
 
   /**
@@ -278,6 +286,7 @@ export default function StoryPage() {
    */
   const fetchNarration = useCallback(
     async (scene: StoryScene) => {
+      setIsNarrationLoading(true);
       const payload: TtsRequest = {
         text: scene.narration,
         voiceRole: "narration",
@@ -291,9 +300,14 @@ export default function StoryPage() {
         });
         const data = (await response.json()) as TtsResponse;
         if (!response.ok || !data.audioBase64) return;
-        await playNarration(data.audioBase64, data.wordTimings);
+        await playNarration(scene.index, data.audioBase64, data.wordTimings);
+        setNarratedScenes((prev) =>
+          prev.includes(scene.index) ? prev : [...prev, scene.index]
+        );
       } catch (error) {
         console.error("[story] narration fetch failed", error);
+      } finally {
+        setIsNarrationLoading(false);
       }
     },
     [playNarration, prefs.narrationSpeed]
@@ -303,21 +317,51 @@ export default function StoryPage() {
    * Replays the current narration from the start.
    */
   const replayNarration = useCallback(() => {
-    if (!audioRef.current) return;
+    if (!activeScene) return;
+    if (!audioRef.current || narrationSceneIndex !== activeScene.index) {
+      void fetchNarration(activeScene);
+      return;
+    }
     audioRef.current.currentTime = 0;
     void audioRef.current.play();
-    setIsNarrating(true);
-    syncCaptionTime();
-  }, [syncCaptionTime]);
+    updateCaptionTime();
+  }, [activeScene, fetchNarration, narrationSceneIndex, updateCaptionTime]);
 
   /**
-   * Advances to the next scene if available.
+   * Marks the active scene image as loaded in the browser.
+   */
+  const handleActiveSceneImageLoaded = useCallback(() => {
+    if (!activeScene) return;
+    setLoadedSceneImages((prev) =>
+      prev.includes(activeScene.index) ? prev : [...prev, activeScene.index]
+    );
+  }, [activeScene]);
+
+  /**
+   * Sends child to quiz for the completed story.
+   */
+  const goToQuiz = useCallback(() => {
+    if (!story || !childId) return;
+    try {
+      window.sessionStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify(story));
+    } catch (error) {
+      console.warn("[story] failed to persist story for quiz handoff", error);
+    }
+    const encodedStory = btoa(JSON.stringify(story));
+    router.push(`/child/quiz?childId=${encodeURIComponent(childId)}&story=${encodeURIComponent(encodedStory)}`);
+  }, [childId, router, story]);
+
+  /**
+   * Advances to the next scene, or enters quiz at the end.
    */
   const goToNextScene = useCallback(() => {
     if (!story) return;
-    if (activeIndex >= story.scenes.length - 1) return;
+    if (activeIndex >= story.scenes.length - 1) {
+      goToQuiz();
+      return;
+    }
     setActiveIndex((prev) => prev + 1);
-  }, [activeIndex, story]);
+  }, [activeIndex, goToQuiz, story]);
 
   /**
    * Marks the current scene as needing easier narration.
@@ -443,17 +487,30 @@ export default function StoryPage() {
     if (nextScene) {
       void ensureSceneImage(nextScene);
     }
-    void fetchNarration(activeScene);
-  }, [activeIndex, activeScene, ensureSceneImage, fetchNarration, story]);
+  }, [activeIndex, activeScene, ensureSceneImage, story]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setIsNarrating(false);
+    setNarrationSceneIndex(null);
+    setCurrentTimeMs(0);
+    setWordTimings([]);
+  }, [activeIndex]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [activeIndex]);
 
   useEffect(() => {
     return () => {
-      stopCaptionSync();
       if (audioRef.current) {
         audioRef.current.pause();
       }
     };
-  }, [stopCaptionSync]);
+  }, []);
 
   /**
    * Detects first user interaction and retries pending audio if needed.
@@ -550,6 +607,7 @@ export default function StoryPage() {
             imageUrl={activeScene.imageUrl}
             imageAlt={buildImageAlt(activeScene)}
             isMarkedEasy={madeEasierScenes.includes(activeIndex)}
+            onImageLoaded={handleActiveSceneImageLoaded}
           >
             <CaptionBar
               narration={activeScene.narration}
@@ -586,18 +644,28 @@ export default function StoryPage() {
         )}
 
         <div className="flex flex-col gap-4 md:flex-row">
-          <Button label="Say it again" onClick={replayNarration} />
           <Button
-            label="Next"
+            label={hasNarratedActiveScene ? "Say it again" : "Play narration"}
+            onClick={replayNarration}
+            disabled={!isActiveSceneImageLoaded || isNarrationLoading}
+          />
+          <Button
+            label={isLastScene ? "Start Quiz" : "Next"}
             variant="secondary"
             onClick={goToNextScene}
-            disabled={!story || activeIndex >= (story?.scenes.length ?? 1) - 1}
+            disabled={!story || (isLastScene && !childId)}
           />
         </div>
 
+        {!isActiveSceneImageLoaded && (
+          <p className="text-sm" style={{ color: colors.textMuted }}>
+            Narration unlocks when the scene image finishes loading.
+          </p>
+        )}
+
         {!isSupported && (
           <p className="text-sm" style={{ color: colors.textMuted }}>
-            Voice commands aren't available here. Use the buttons instead.
+            Voice commands aren&apos;t available here. Use the buttons instead.
           </p>
         )}
 
@@ -608,5 +676,21 @@ export default function StoryPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function StoryPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="flex flex-1 items-center justify-center px-6 py-10">
+          <p style={{ color: colors.textMuted, fontFamily: typography.ui }}>
+            Loading story...
+          </p>
+        </div>
+      }
+    >
+      <StoryPageContent />
+    </React.Suspense>
   );
 }
