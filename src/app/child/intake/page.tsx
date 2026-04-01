@@ -1,6 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { IntakeRequest, IntakeResponse, IntakeSessionData, IntakeStep } from "@/types/Intake";
 import type { ReadingMode, StoryTone, Subject } from "@/types/Child";
 import { Spriggle } from "@/app/components/Spriggle";
@@ -79,10 +79,13 @@ function getToneCardStyle(): React.CSSProperties {
  * Magic Door intake experience across four child-friendly screens.
  */
 export default function IntakePage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const childId = searchParams.get("childId") ?? undefined;
   const parentIdParam = searchParams.get("parentId");
-  const parentId = parentIdParam?.trim() || "demo-parent";
+  const demoParentId = process.env.NEXT_PUBLIC_DEMO_PARENT_ID?.trim();
+  const parentId =
+    parentIdParam?.trim() || demoParentId || "demo-parent";
   const isReturnSession = Boolean(childId);
   const { updatePrefs, disableAnimations } = useAccessibility();
 
@@ -253,6 +256,7 @@ export default function IntakePage() {
    */
   const sendStep = useCallback(
     async (nextStep: IntakeStep, value?: string) => {
+      console.info("[intake] sendStep", { nextStep, value });
       if (inFlightStepRef.current === nextStep) {
         return;
       }
@@ -277,6 +281,12 @@ export default function IntakePage() {
           body: JSON.stringify(requestBody),
         });
         const data = (await res.json()) as IntakeResponse;
+        console.info("[intake] response", {
+          requestId,
+          ok: res.ok,
+          error: data.error ?? null,
+          nextStep: data.nextStep ?? null,
+        });
         if (!res.ok || data.error) {
           setSpriggleText("Oops! Let's try that again! 🌟");
           setIsLoading(false);
@@ -549,6 +559,41 @@ export default function IntakePage() {
     },
     [sendStep]
   );
+
+  const handleCreateStory = useCallback(() => {
+    if (!profileId || !sessionData.subject) return;
+    const params = new URLSearchParams({
+      childId: profileId,
+      subject: sessionData.subject,
+      session: "1",
+    });
+    router.push(`/child/story?${params.toString()}`);
+  }, [profileId, router, sessionData.subject]);
+
+  const handleStartOver = useCallback(() => {
+    stop();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (audioResolveRef.current) {
+      audioResolveRef.current();
+      audioResolveRef.current = null;
+    }
+    setIsAudioPaused(false);
+    setIsLoading(false);
+    setSpriggleText("Hi! I'm Spriggle!");
+    setProfileId(null);
+    setSttConfig({ listen: false, timeoutMs: 0 });
+    setCapturedValue(null);
+    setTextInputValue("");
+    setUnrecognizedCount(0);
+    setWaitingForReady(false);
+    setSessionData(DEFAULT_SESSION_DATA);
+    setStep("start");
+    inFlightStepRef.current = null;
+    requestIdRef.current = 0;
+  }, [stop]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -912,12 +957,65 @@ export default function IntakePage() {
 
         {step === "complete" && (
           <div className="flex flex-col gap-4 p-6 md:p-10" style={getPanelStyle()}>
-            <h2 className="text-2xl font-semibold" style={{ color: colors.textPrimary }}>
-              All set!
-            </h2>
-            <p className="text-base" style={{ color: colors.textMuted }}>
-              Spriggle saved your magic door choices.
-            </p>
+            {(() => {
+              const rawColor = sessionData.favoriteColor?.trim() ?? "";
+              const hasColor =
+                typeof window !== "undefined" &&
+                typeof CSS !== "undefined" &&
+                rawColor.length > 0 &&
+                CSS.supports("color", rawColor);
+              const safeColor = hasColor ? rawColor : "";
+              const safeAnimal = sessionData.favoriteAnimal?.trim() || "mystery buddy";
+              const canCreateStory = Boolean(profileId && sessionData.subject);
+              return (
+                <>
+            <div className="flex flex-col gap-3">
+              <h2 className="text-2xl font-semibold" style={{ color: colors.textPrimary }}>
+                All set!
+              </h2>
+              <div
+                style={{
+                  fontFamily: typography.display,
+                  fontSize: "2.5rem",
+                  color: colors.accent,
+                  lineHeight: 1,
+                }}
+              >
+                {sessionData.name ? `${sessionData.name}!` : "You did it!"}
+              </div>
+              <p className="text-base" style={{ color: colors.textMuted }}>
+                Spriggle saved your magic door choices.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-4">
+              <div
+                className="flex items-center gap-2 px-5 py-3"
+                style={{
+                  borderRadius: radii.pill,
+                  backgroundColor: safeColor
+                    ? safeColor
+                    : hexToRgba(colors.primaryLight, 0.35),
+                  border: `2px solid ${hexToRgba(colors.primaryLight, 0.4)}`,
+                  color: colors.background,
+                  fontFamily: typography.ui,
+                  fontSize: "1rem",
+                  fontWeight: 600,
+                  boxShadow: `0 10px 24px ${hexToRgba(colors.primaryLight, 0.25)}`,
+                }}
+              >
+                <span>Favorite animal:</span>
+                <span style={{ color: colors.background }}>{safeAnimal}</span>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {canCreateStory && (
+                <Button label="Create story" variant="confirm" onClick={handleCreateStory} />
+              )}
+              <Button label="Start over" variant="outline" onClick={handleStartOver} />
+            </div>
+                </>
+              );
+            })()}
             {profileId && (
               <p className="text-sm" style={{ color: colors.textMuted }}>
                 Profile ID: {profileId}
