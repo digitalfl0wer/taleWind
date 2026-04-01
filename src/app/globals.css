@@ -203,7 +203,8 @@ html.larger-text body {
 
 /* Mode 5: Captions always on (default behavior) */
 .captions {
-  display: block;
+  /* Keep this selector for accessibility toggling only.
+     Layout (flex/wrap/gaps) is controlled by the component classes. */
 }
 
 html.captions-hidden .captions {

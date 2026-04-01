@@ -15,9 +15,9 @@ import { createRequire } from "node:module";
 import type {
   CurriculumSearchDoc,
   RawCurriculumEntry,
-} from "../../types/Curriculum.ts";
-import { indexCurriculumChunks } from "../../lib/azure/search.ts";
-import { getSupabaseServiceClient } from "../../lib/supabase/client.ts";
+} from "../../types/Curriculum";
+import { indexCurriculumChunks } from "../../lib/azure/search";
+import { getSupabaseServiceClient } from "../../lib/supabase/client";
 
 /**
  * Raw curriculum entry as stored in JSON files.

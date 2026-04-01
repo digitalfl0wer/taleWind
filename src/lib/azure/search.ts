@@ -200,29 +200,26 @@ export async function retrieveChildProfileDoc(
   const client = getChildrenSearchClient();
 
   try {
-    const result = (await client.getDocument(childId)) as
-      | Record<string, unknown>
-      | null;
+    const result = (await client.getDocument(childId)) as ChildSearchDoc | null;
     if (!result) return null;
 
     return {
-      id: String(result["id"] ?? ""),
-      childId: String(result["id"] ?? ""),
-      name: String(result["name"] ?? ""),
-      age: 6,
-      grade: 1,
-      interests: [],
-      readingComfort: "beginner",
-      favoriteColor: String(result["favoriteColor"] ?? ""),
-      favoriteAnimal: String(result["favoriteAnimal"] ?? ""),
-      latestPersonalDetail: String(result["personalDetails"] ?? ""),
-      preferredSubject: String(result["subject"] ?? ""),
-      readingMode: String(result["readingMode"] ?? ""),
-      storyTone: String(result["storyTone"] ?? ""),
-      currentAdaptation: String(result["currentDifficulty"] ?? "hold"),
-      recentSessionsSummary: "[]",
-      derivedMemoryText: "",
-      updatedAt: String(result["updatedAt"] ?? ""),
+      id: String(result.id ?? ""),
+      name: String(result.name ?? ""),
+      subject: String(result.subject ?? ""),
+      readingMode: String(result.readingMode ?? ""),
+      storyTone: String(result.storyTone ?? ""),
+      favoriteColor: String(result.favoriteColor ?? ""),
+      favoriteAnimal: String(result.favoriteAnimal ?? ""),
+      personalDetails: String(result.personalDetails ?? ""),
+      currentDifficulty: String(result.currentDifficulty ?? "hold"),
+      sessionCount:
+        typeof result.sessionCount === "number" ? result.sessionCount : 0,
+      lastQuestionAsked:
+        typeof result.lastQuestionAsked === "number"
+          ? result.lastQuestionAsked
+          : -1,
+      updatedAt: String(result.updatedAt ?? ""),
     };
   } catch (err) {
     // Azure Search throws a 404-like error when the document doesn't exist
@@ -252,27 +249,18 @@ export async function indexChildProfileDoc(doc: ChildSearchDoc): Promise<void> {
   const client = getChildrenSearchClient();
 
   try {
-    const sessionCount = (() => {
-      try {
-        const parsed = JSON.parse(doc.recentSessionsSummary);
-        return Array.isArray(parsed) ? parsed.length : 0;
-      } catch {
-        return 0;
-      }
-    })();
-
     const payload = {
       id: doc.id,
       name: doc.name,
-      subject: doc.preferredSubject,
+      subject: doc.subject,
       readingMode: doc.readingMode,
       storyTone: doc.storyTone,
       favoriteColor: doc.favoriteColor,
       favoriteAnimal: doc.favoriteAnimal,
-      personalDetails: doc.latestPersonalDetail,
-      currentDifficulty: doc.currentAdaptation,
-      sessionCount,
-      lastQuestionAsked: 0,
+      personalDetails: doc.personalDetails,
+      currentDifficulty: doc.currentDifficulty,
+      sessionCount: doc.sessionCount,
+      lastQuestionAsked: doc.lastQuestionAsked,
       updatedAt: doc.updatedAt,
     };
     const result = await client.mergeOrUploadDocuments([payload]);

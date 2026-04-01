@@ -1,22 +1,12 @@
 import type { Metadata } from "next";
-import { Comfortaa, Playfair_Display, Sacramento } from "next/font/google";
+import type { CSSProperties } from "react";
 import "./globals.css";
 
-const comfortaa = Comfortaa({
-  variable: "--font-ui",
-  subsets: ["latin"],
-});
-
-const playfairDisplay = Playfair_Display({
-  variable: "--font-narration",
-  subsets: ["latin"],
-});
-
-const sacramento = Sacramento({
-  variable: "--font-display",
-  weight: "400",
-  subsets: ["latin"],
-});
+const fontVariables = {
+  "--font-ui": "'Comfortaa', sans-serif",
+  "--font-narration": "'Playfair Display', serif",
+  "--font-display": "'Sacramento', cursive",
+} as CSSProperties;
 
 export const metadata: Metadata = {
   title: "Talewind",
@@ -31,7 +21,8 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${comfortaa.variable} ${playfairDisplay.variable} ${sacramento.variable} h-full antialiased`}
+      className="h-full antialiased"
+      style={fontVariables}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

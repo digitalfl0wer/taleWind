@@ -130,7 +130,9 @@ export function useVoiceCommands({
       recognitionRef.current.abort();
     }
     isRunningRef.current = false;
-    setIsListening(false);
+    setTimeout(() => {
+      setIsListening(false);
+    }, 0);
   }, []);
 
   /**
@@ -165,15 +167,24 @@ export function useVoiceCommands({
     isRunningRef.current = true;
     setIsListening(true);
     recognition.start();
-  }, [enabled, getRecognition, onCommand, onUnrecognized, paused]);
+  }, [getRecognition, onCommand, onUnrecognized]);
 
   useEffect(() => {
+    let startTimer: ReturnType<typeof setTimeout> | null = null;
     if (enabled && !paused) {
-      startListening();
+      // Defer start to avoid a synchronous state update in the effect body.
+      startTimer = setTimeout(() => {
+        startListening();
+      }, 0);
     } else {
       stopListening();
     }
-    return () => stopListening();
+    return () => {
+      if (startTimer !== null) {
+        clearTimeout(startTimer);
+      }
+      stopListening();
+    };
   }, [enabled, paused, startListening, stopListening]);
 
   const isSupported =
