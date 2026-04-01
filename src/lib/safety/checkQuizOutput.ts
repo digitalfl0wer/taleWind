@@ -25,7 +25,7 @@ const QUIZ_SAFETY_SYSTEM_PROMPT = `You are a child safety reviewer for a quiz ap
 
 Your job is to review quiz questions and determine if they are safe and age-appropriate.
 
-SAFETY RULES — a question FAILS if it:
+SAFETY RULES — a question or hint FAILS if it:
 - Uses vocabulary above first-grade reading level
 - Implies the child will fail, be judged, or feel shame for a wrong answer
 - Uses assessment language like "test", "score", "grade", "pass", or "fail"
@@ -35,13 +35,18 @@ SAFETY RULES — a question FAILS if it:
 - Feels cold, clinical, or pressuring rather than warm and playful
 
 If ALL questions PASS, return:
-{ "passed": true, "rewrittenQuestions": null }
+{ "passed": true, "rewrittenQuestions": null, "rewrittenHints": null }
 
 If any question FAILS, rewrite the question text to be safe and appropriate,
-keeping the same educational intent. Return:
-{ "passed": false, "rewrittenQuestions": { "<questionId>": "<safe replacement question text>" } }
+keeping the same educational intent. If a hint is unsafe, rewrite the hint too.
+Return:
+{
+  "passed": false,
+  "rewrittenQuestions": { "<questionId>": "<safe replacement question text>" },
+  "rewrittenHints": { "<questionId>": "<safe replacement hint text>" }
+}
 
-Only include question IDs that needed rewriting in rewrittenQuestions.
+Only include question IDs that needed rewriting in rewrittenQuestions/rewrittenHints.
 Respond with valid JSON only — no prose, no markdown fences.`;
 
 // ── Check function ────────────────────────────────────────────────────────────
@@ -65,6 +70,7 @@ export async function checkQuizOutput(
   const questionsPayload = questions.map((q) => ({
     id: q.id,
     question: q.question,
+    hint: q.hint,
     index: q.index,
   }));
 
@@ -73,6 +79,7 @@ export async function checkQuizOutput(
   const safetyResponse = await callGptJson<{
     passed: boolean;
     rewrittenQuestions: Record<string, string> | null;
+    rewrittenHints: Record<string, string> | null;
   }>({
     systemPrompt: QUIZ_SAFETY_SYSTEM_PROMPT,
     userMessage,
@@ -99,7 +106,8 @@ export async function checkQuizOutput(
 
   const rewrittenQuestions = applyRewrites(
     questions,
-    safetyResponse.rewrittenQuestions ?? {}
+    safetyResponse.rewrittenQuestions ?? {},
+    safetyResponse.rewrittenHints ?? {}
   );
 
   return { passed: false, questions: rewrittenQuestions, wasRewritten: true };
@@ -118,14 +126,17 @@ export async function checkQuizOutput(
  */
 function applyRewrites(
   questions: QuizQuestion[],
-  rewrites: Record<string, string>
+  rewrites: Record<string, string>,
+  hintRewrites: Record<string, string>
 ): QuizQuestion[] {
   return questions.map((q) => {
     const rewrite = rewrites[q.id];
-    if (rewrite) {
-      return { ...q, question: rewrite };
-    }
-    return q;
+    const hintRewrite = hintRewrites[q.id];
+    return {
+      ...q,
+      question: rewrite ?? q.question,
+      hint: hintRewrite ?? q.hint,
+    };
   });
 }
 

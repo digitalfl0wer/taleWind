@@ -8,9 +8,10 @@
  */
 
 import type { Subject } from "./Child";
-import type { Story } from "./Story";
+import type { Story, StoryScene } from "./Story";
 import type { WordTiming } from "@/lib/azure/speech";
 import type { VoiceRole } from "@/lib/azure/speech";
+import type { QuizAnswer, QuizQuestion, QuizScore, QuestionScore } from "./Quiz";
 
 // ── Story API ────────────────────────────────────────────────────────────────
 
@@ -64,3 +65,51 @@ export interface TtsResponse {
   error?: string;
 }
 
+// ── Story Extend API (frontend stub) ─────────────────────────────────────────
+
+export interface StoryExtendRequest {
+  childId: string;
+  story: Story;
+  sceneIndex: number;
+}
+
+export interface StoryExtendResponse {
+  scene: StoryScene | null;
+  error?: string;
+}
+
+// ── Quiz API ─────────────────────────────────────────────────────────────────
+
+export interface QuizGenerateRequest {
+  mode: "generate";
+  childId: string;
+  story: Story;
+}
+
+export interface QuizScoreRequest {
+  mode: "score";
+  childId: string;
+  story: Story;
+  questions: QuizQuestionPublic[];
+  answers: QuizAnswer[];
+  madeEasierScenes?: string[];
+}
+
+export interface QuizGenerateResponse {
+  questions: QuizQuestionPublic[] | null;
+  safety: { passed: boolean; wasRewritten: boolean } | null;
+  error?: string;
+}
+
+export interface QuizScoreResponse {
+  score: QuizScore | null;
+  questionScores: QuestionScore[] | null;
+  adaptationResult: QuizScore["adaptationResult"] | null;
+  sessionId: string | null;
+  error?: string;
+}
+
+export type QuizRequest = QuizGenerateRequest | QuizScoreRequest;
+export type QuizResponse = QuizGenerateResponse | QuizScoreResponse;
+
+export type QuizQuestionPublic = Omit<QuizQuestion, "expectedAnswer">;
