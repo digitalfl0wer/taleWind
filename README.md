@@ -16,11 +16,11 @@
 
 ## The Problem
 
-First grade is the most critical literacy window in a child's life. Research consistently shows that a child who cannot read proficiently by the end of first grade is four times more likely to drop out of high school. Literacy isn't just a subject — it's the foundation every other subject is built on.
+First grade is the most critical literacy window in a child's life. Research consistently shows that a child who cannot read proficiently by the end of first grade is four times more likely to drop out of high school. Literacy isn't just a subject, it's the foundation every other subject is built on.
 
 Existing ed-tech tools for this age group (ABCMouse, reading apps, adaptive platforms) share a fundamental flaw: **static content**. The story your child reads today is the same story every other child gets. There is no "you" in the curriculum.
 
-Children ages 5–7 have short attention spans, emerging reading skills, and a deep need to feel seen. When the puppy in the story has their favorite animal's name, when the sky is their favorite color, when the math problem is about something they told the app they love — they lean in. Engagement becomes attention, attention becomes comprehension, comprehension becomes memory.
+Children ages 5–7 have short attention spans, emerging reading skills, and a deep need to feel seen. When the puppy in the story has their favorite animal's name, when the sky is their favorite color, when the math problem is about something they told the app they love they lean in. Engagement becomes attention, attention becomes comprehension, comprehension becomes memory.
 
 And critically: many 5-year-olds cannot type. Any solution that is not voice-first is not actually accessible to this age group.
 
@@ -30,15 +30,29 @@ And critically: many 5-year-olds cannot type. Any solution that is not voice-fir
 
 Talewind is a fully voice-driven adaptive story tutor. Every session is a complete loop:
 
-1. **Spriggle (the AI guide) meets the child** — learns their name, favorite color, favorite animal, preferred subject, reading style, and story vibe through a warm conversation, not a form.
-2. **A personalized story is generated** — 4–6 illustrated scenes built from real curriculum content, with the child's details woven in by the AI at the prompt level.
-3. **Spriggle narrates the story** — with real-time word-level caption sync, two distinct voices, and adjustable speed.
-4. **The child answers 2–3 comprehension questions** — by voice or text. Scoring is generous. There is no shame.
-5. **The system learns** — comprehension score drives a silent difficulty adjustment. A three-layer memory system records what worked, what was hard, and what the child loves. The next session is smarter.
+1. **Spriggle (the AI guide) meets the child** learns their name, favorite color, favorite animal, preferred subject, reading style, and story vibe through a warm conversation, not a form.
+2. **A personalized story is generated** 4–6 illustrated scenes built from real curriculum content, with the child's details woven in by the AI at the prompt level.
+3. **Spriggle narrates the story**  with real-time word-level caption sync, two distinct voices, and adjustable speed.
+4. **The child answers 2–3 comprehension questions** by voice or text. Scoring is generous. There is no shame.
+5. **The system learns**  comprehension score drives a silent difficulty adjustment. A three-layer memory system records what worked, what was hard, and what the child loves. The next session is smarter.
 
 Every word that reaches a 5-year-old passes through a dedicated AI safety agent first. No adult content, no scary language, no assessment pressure ever surfaces.
 
 ---
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 15 (App Router), TypeScript |
+| Styling | Tailwind CSS v4, locked design token system |
+| AI / LLM | Azure OpenAI GPT-4o mini (5 agents) |
+| RAG | Azure AI Search — `talewind-curriculum` + `talewind-children` |
+| TTS / STT | Azure AI Speech (AnaNeural + AmberNeural) + Web Speech API |
+| Image Gen | FLUX 1.1 pro via Azure AI |
+| Database | Supabase (Postgres) — `children`, `sessions`, `child_memory` |
+| Fonts | Comfortaa (UI) · Playfair Display (narration) · Sacramento (display) · OpenDyslexic (accessibility) |
+| Hosting | Vercel |
+
 
 ## System Architecture
 
@@ -80,18 +94,18 @@ Five API routes, four AI agents, two Azure AI Search indexes, one Supabase datab
 Spriggle is the AI character that greets every child. The intake conversation is powered by GPT-4o mini (max 150 tokens, temperature 0.7) with a carefully constrained system prompt.
 
 The conversation collects exactly what the story engine needs:
-- First name (only — no last name, school, or contact info ever requested)
+- First name (only no last name, school, or contact info ever requested)
 - Favorite color and favorite animal
 - Preferred subject: Animals, Space, or Math
 - Reading mode: "Read to me" or "Read together"
 - Story vibe: Calm, Exciting, or Silly
 
 **System prompt constraints enforced:**
-- Never use the word "secret" — replaced with "something really cool to share"
-- Warmth is unconditional — never tied to a correct answer
-- Free-form conversation is blocked — Spriggle always gently returns to the task
+- Never use the word "secret" replaced with "something really cool to share"
+- Warmth is unconditional never tied to a correct answer
+- Free-form conversation is blocked Spriggle always gently returns to the task
 - After 3 failed confirmation attempts, the system accepts the last heard values and moves on
-- Every step has hard-coded fallback text — the child never sees an error or a blank screen
+- Every step has hard-coded fallback text the child never sees an error or a blank screen
 
 **Return sessions** use a 7-question rotating bank tracked by `lastQuestionAsked` index, so Spriggle asks a new personal question every session without repeating.
 
@@ -109,7 +123,7 @@ The story engine is what makes Talewind genuinely different from a template syst
 3. Inject both as structured context into the story prompt
 
 **Personalization priority order (enforced in system prompt):**
-1. Latest personal detail — highest priority (e.g., "loves the beach" → beach setting)
+1. Latest personal detail- highest priority (e.g., "loves the beach" → beach setting)
 2. Favorite animal — must appear as a character or story element
 3. Favorite color — must appear in scene descriptions and every image prompt
 4. Derived memory — inferred themes from prior sessions (populated after 3 sessions)
@@ -120,7 +134,7 @@ The story engine is what makes Talewind genuinely different from a template syst
 - `currentDifficulty: "hold"` → medium (default)
 - `currentDifficulty: "enrich"` → richer vocabulary, more complex narrative
 
-Every scene includes an image prompt that begins with `"Soft illustrated children's book style."` — this prefix is non-negotiable and enforces visual safety at the generation level before FLUX ever receives the request.
+Every scene includes an image prompt that begins with `"Soft illustrated children's book style."`  this prefix is non-negotiable and enforces visual safety at the generation level before FLUX ever receives the request.
 
 Output is validated for structure (4–6 scenes, required fields) and then passed to the Safety Agent before any data leaves the server.
 
@@ -153,15 +167,15 @@ After scoring, the route executes the full memory write pipeline: create session
 
 ### 4. Safety Agent
 
-Every AI-generated output — story narration and quiz questions — passes through a dedicated safety review before reaching the child. This is not a filter; it is a rewriting agent.
+Every AI-generated output, story narration and quiz questions  passes through a dedicated safety review before reaching the child. This is not a filter; it is a rewriting agent.
 
 **Story safety** (GPT-4o mini, temperature 0.2, max 1,024 tokens) rejects content that contains:
 - Vocabulary above first-grade reading level
 - Scary, violent, or threatening elements; any mention of death, injury, blood, or fear
 - Adult themes or emotionally complex moral situations
 - Content outside the three approved subjects: Animals, Space, Math
-- Conditional warmth — affection tied to performance
-- Assessment language — any hint of testing, grading, or scoring pressure
+- Conditional warmth affection tied to performance
+- Assessment language any hint of testing, grading, or scoring pressure
 
 When a scene fails, the agent rewrites only the narration of flagged scenes. Scene titles, structure, and educational intent are preserved. The client receives a `wasRewritten: boolean` flag.
 
@@ -223,7 +237,7 @@ The memory system is designed to be additive — no session data is ever overwri
 
 ## Responsible AI Design
 
-Responsible AI isn't a checklist item in Talewind — it shapes the architecture.
+Responsible AI isn't a checklist item in Talewind it shapes the architecture.
 
 **Child-safe content pipeline.** No AI-generated text reaches the child without passing through the Safety Agent first. Flagged content is rewritten in-place. The child never sees a raw GPT response.
 
@@ -304,19 +318,6 @@ All chunks are: `grade_level: "1"`, `approved: true`. Every factual statement in
 
 ---
 
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 15 (App Router), TypeScript |
-| Styling | Tailwind CSS v4, locked design token system |
-| AI / LLM | Azure OpenAI GPT-4o mini (5 agents) |
-| RAG | Azure AI Search — `talewind-curriculum` + `talewind-children` |
-| TTS / STT | Azure AI Speech (AnaNeural + AmberNeural) + Web Speech API |
-| Image Gen | FLUX 1.1 pro via Azure AI |
-| Database | Supabase (Postgres) — `children`, `sessions`, `child_memory` |
-| Fonts | Comfortaa (UI) · Playfair Display (narration) · Sacramento (display) · OpenDyslexic (accessibility) |
-| Hosting | Vercel |
 
 ---
 
